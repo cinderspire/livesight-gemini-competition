@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- Sky/heaven gradient -->
+    <radialGradient id="skyGradient" cx="50%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#87CEEB"/>
+      <stop offset="40%" stop-color="#4DA6FF"/>
+      <stop offset="100%" stop-color="#1a365d"/>
+    </radialGradient>
+
+    <!-- Sun glow -->
+    <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFD700"/>
+      <stop offset="70%" stop-color="#FFA500"/>
+      <stop offset="100%" stop-color="#FF6B00" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Earth gradient -->
+    <radialGradient id="earthGradient" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#4169E1"/>
+      <stop offset="40%" stop-color="#1E90FF"/>
+      <stop offset="70%" stop-color="#228B22"/>
+      <stop offset="100%" stop-color="#006400"/>
+    </radialGradient>
+
+    <!-- Iris gradient -->
+    <radialGradient id="irisGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00CED1"/>
+      <stop offset="80%" stop-color="#008B8B"/>
+      <stop offset="100%" stop-color="#005555"/>
+    </radialGradient>
+
+    <!-- Glow filter -->
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background circle (app icon shape) -->
+  <circle cx="256" cy="256" r="250" fill="url(#skyGradient)"/>
+
+  <!-- Sun at top -->
+  <circle cx="256" cy="90" r="50" fill="url(#sunGlow)" filter="url(#glow)"/>
+  <circle cx="256" cy="90" r="32" fill="#FFD700"/>
+
+  <!-- Sun rays -->
+  <g stroke="#FFD700" stroke-width="3" stroke-linecap="round" opacity="0.7">
+    <line x1="256" y1="30" x2="256" y2="10"/>
+    <line x1="200" y1="55" x2="180" y2="35"/>
+    <line x1="312" y1="55" x2="332" y2="35"/>
+    <line x1="165" y1="100" x2="140" y2="100"/>
+    <line x1="347" y1="100" x2="372" y2="100"/>
+  </g>
+
+  <!-- Main eye white -->
+  <ellipse cx="256" cy="290" rx="175" ry="105" fill="white" filter="url(#glow)"/>
+
+  <!-- Eye outline -->
+  <ellipse cx="256" cy="290" rx="175" ry="105" fill="none" stroke="#1a365d" stroke-width="5"/>
+
+  <!-- Iris -->
+  <circle cx="256" cy="290" r="72" fill="url(#irisGradient)"/>
+
+  <!-- Earth as pupil -->
+  <circle cx="256" cy="290" r="48" fill="url(#earthGradient)"/>
+
+  <!-- Continents on Earth -->
+  <ellipse cx="245" cy="278" rx="18" ry="12" fill="#228B22" opacity="0.8"/>
+  <ellipse cx="270" cy="295" rx="12" ry="16" fill="#228B22" opacity="0.7"/>
+  <ellipse cx="240" cy="305" rx="10" ry="8" fill="#228B22" opacity="0.6"/>
+
+  <!-- Eye reflection/sparkle -->
+  <circle cx="235" cy="272" r="10" fill="white" opacity="0.8"/>
+  <circle cx="280" cy="300" r="5" fill="white" opacity="0.5"/>
+
+  <!-- Upper eyelashes -->
+  <path d="M95 265 Q130 200 175 225" stroke="#1a365d" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M145 215 Q185 165 225 195" stroke="#1a365d" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M200 185 Q240 150 280 185" stroke="#1a365d" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M287 195 Q327 165 367 215" stroke="#1a365d" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M337 225 Q382 200 417 265" stroke="#1a365d" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+  <!-- Soft clouds -->
+  <ellipse cx="90" cy="380" rx="45" ry="22" fill="white" opacity="0.25"/>
+  <ellipse cx="430" cy="400" rx="55" ry="25" fill="white" opacity="0.2"/>
+  <ellipse cx="256" cy="440" rx="70" ry="20" fill="white" opacity="0.15"/>
+
+  <!-- Horizon glow -->
+  <ellipse cx="256" cy="480" rx="200" ry="30" fill="#FFD700" opacity="0.2"/>
+</svg>

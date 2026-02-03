@@ -1,0 +1,9 @@
+{
+  "name": "LiveSight - Proactive AI Vision",
+  "description": "A proactive navigation assistant for the visually impaired using Gemini Live API to predict hazards before they happen.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}

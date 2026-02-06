@@ -7,7 +7,8 @@ import { parseColorResponse } from '../features/color-detection/colorService';
 import { parseExpirationResponse } from '../features/expiration/expirationService';
 
 // Connection timeout in milliseconds
-const CONNECTION_TIMEOUT = 12000; // Fast connection
+// Connection timeout in milliseconds
+const CONNECTION_TIMEOUT = 30000; // Increased to 30s for stability
 const RECONNECT_DELAY = 1000; // 1 second between reconnects
 
 /**
@@ -88,12 +89,12 @@ export class LiveSightService {
 
     // Append general behavior rules that apply to all modes
     return `${prompt}
-    
-GENEL KURALLAR:
-- Sadece Türkçe konuş.
-- Cevapların kısa olsun (Maks 1-2 cümle).
-- Acil durumlar dışında "Anlaşıldı" veya "Tamam" deme.
-- Sesin doğal ve güven verici olsun.`;
+
+GENERAL RULES:
+- Keep responses short (Max 1-2 sentences).
+- Do not say "OK" or "Got it" unless it's an emergency confirmation.
+- Sound natural and reassuring.
+- Adapt language to the user (respond in the same language they speak).`;
   }
 
   /**
@@ -132,20 +133,18 @@ GENEL KURALLAR:
    */
   public async updateWeather(newWeather: WeatherContext): Promise<void> {
     if (this.session && this.isConnected) {
-      const updateMsg = `Hava durumu: ${newWeather.condition}, ${newWeather.temperature}°C.${newWeather.isWet ? ' Zemin ıslak olabilir, dikkatli ol.' : ''}`;
+      const updateMsg = `Weather update: ${newWeather.condition}, ${newWeather.temperature}°C.${newWeather.isWet ? ' Surfaces may be wet, be careful.' : ''}`;
       this.sendTextMessage(updateMsg);
     }
   }
 
   /**
-   * Send a text message to the AI
+   * Send a text message to the AI via client content
    */
   private sendTextMessage(message: string): void {
     if (this.session) {
       try {
-        this.session.sendRealtimeInput({
-          media: { mimeType: 'text/plain', data: btoa(message) }
-        });
+        this.session.sendClientContent({ turns: message, turnComplete: true });
       } catch (error) {
         console.error('[LiveSight] Failed to send text message:', error);
       }
@@ -186,13 +185,13 @@ GENEL KURALLAR:
         if (!this.isConnected) {
           console.error('[LiveSight] Connection timeout');
           this.callbacks.onStatusChange('error');
-          this.callbacks.onTranscript('Bağlantı zaman aşımı. API anahtarını kontrol edin.', false);
+          this.callbacks.onTranscript('Connection timed out. Please check your API key.', false);
           this.stop();
         }
       }, CONNECTION_TIMEOUT);
 
       // Initialize audio contexts in parallel
-      this.callbacks.onTranscript('Bağlanıyor...', false);
+      this.callbacks.onTranscript('Connecting...', false);
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (!AudioContextClass) {
         throw new Error('AudioContext not supported');
@@ -293,7 +292,7 @@ GENEL KURALLAR:
     this.isStarting = false; // Reset starting flag
     this.session = session;
     this.callbacks.onStatusChange('connected');
-    this.callbacks.onTranscript('Bağlandı! Başlıyor...', false);
+    this.callbacks.onTranscript('Connected! Starting...', false);
 
     // Start streaming immediately - no delay
 
@@ -320,7 +319,7 @@ GENEL KURALLAR:
       // Try to reconnect if enabled and within limits
       if (this.shouldReconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
         this.reconnectAttempts++;
-        this.callbacks.onTranscript(`Bağlantı koptu. Yeniden bağlanılıyor... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`, false);
+        this.callbacks.onTranscript(`Connection lost. Reconnecting... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`, false);
         this.callbacks.onStatusChange('connecting');
 
         // Wait briefly before reconnecting
@@ -330,7 +329,7 @@ GENEL KURALLAR:
           }
         }, RECONNECT_DELAY);
       } else {
-        this.callbacks.onTranscript('Bağlantı kapandı. Yeniden başlatmak için butona basın.', false);
+        this.callbacks.onTranscript('Connection closed. Tap the button to restart.', false);
         this.callbacks.onStatusChange('disconnected');
         this.cleanup();
       }
@@ -355,7 +354,7 @@ GENEL KURALLAR:
 
     try {
       // Reconnect to Gemini
-      this.callbacks.onTranscript('AI asistana yeniden bağlanılıyor...', false);
+      this.callbacks.onTranscript('Reconnecting to Gemini AI...', false);
 
       let sessionRef: Session | null = null;
 
@@ -391,7 +390,7 @@ GENEL KURALLAR:
 
     } catch (error) {
       console.error('[LiveSight] Reconnection failed:', error);
-      this.callbacks.onTranscript('Yeniden bağlanma başarısız. Tekrar deneyin.', false);
+      this.callbacks.onTranscript('Reconnection failed. Please try again.', false);
       this.callbacks.onStatusChange('error');
     }
   }
@@ -408,7 +407,7 @@ GENEL KURALLAR:
     this.reconnectAttempts = 0; // Reset counter on success
 
     this.callbacks.onStatusChange('connected');
-    this.callbacks.onTranscript('Yeniden bağlandı! Devam ediyorum...', false);
+    this.callbacks.onTranscript('Reconnected! Resuming...', false);
 
     // Restart video streaming
     this.startVideoStreaming();
@@ -541,9 +540,16 @@ GENEL KURALLAR:
           AUDIO_CONFIG.OUTPUT_SAMPLE_RATE
         );
 
+        // Create Gain Node for Volume Boost (2.5x)
+        const gainNode = this.outputAudioContext.createGain();
+        gainNode.gain.value = 2.5;
+
         const source = this.outputAudioContext.createBufferSource();
         source.buffer = audioBuffer;
-        source.connect(this.outputAudioContext.destination);
+
+        // Connect Source -> Gain -> Destination
+        source.connect(gainNode);
+        gainNode.connect(this.outputAudioContext.destination);
 
         const now = this.outputAudioContext.currentTime;
         this.nextStartTime = Math.max(this.nextStartTime, now);

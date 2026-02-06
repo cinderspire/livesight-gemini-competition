@@ -2,15 +2,13 @@
 
 <div align="center">
 
-![LiveSight Logo](src/assets/images/app_icon.svg)
+**AI-Powered Real-Time Navigation Assistant for the Visually Impaired**
 
-**AI-Powered Navigation Assistant for Visually Impaired Users**
+*Built with Google Gemini 3 & Gemini Live API*
 
-*Powered by Google Gemini Live API*
-
-[![Version](https://img.shields.io/badge/version-1.2.1-blue.svg)](package.json)
-[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20Web-green.svg)](capacitor.config.ts)
-[![AI](https://img.shields.io/badge/AI-Gemini%202.0%20Flash-orange.svg)](https://ai.google.dev/)
+[![Gemini 3](https://img.shields.io/badge/AI-Gemini%203-blue.svg)](https://ai.google.dev/gemini-api/docs/gemini-3)
+[![Live API](https://img.shields.io/badge/API-Gemini%20Live-green.svg)](https://ai.google.dev/gemini-api/docs/live)
+[![Platform](https://img.shields.io/badge/platform-Web%20%7C%20Android%20%7C%20iOS-orange.svg)](package.json)
 
 </div>
 
@@ -18,165 +16,194 @@
 
 ## Overview
 
-LiveSight is a real-time AI navigation assistant designed to help visually impaired users navigate the world safely and independently. Using Google's Gemini Live API with multimodal capabilities, LiveSight provides:
+LiveSight is a **real-time AI navigation assistant** that empowers visually impaired users to explore the world safely and independently. Using **Google Gemini's multimodal Live API**, LiveSight streams live camera video and audio to Gemini, receiving instant spoken responses that guide users through their environment.
 
-- **Real-time scene description** via camera analysis
-- **Voice interaction** in Turkish language
-- **Hazard detection** including vehicles, obstacles, and stairs
-- **Haptic feedback** for alerts and navigation cues
-- **Fall detection** with automatic SOS
+This is not just another chatbot. LiveSight is a **life-changing accessibility tool** that acts as "AI Eyes" - continuously analyzing the user's surroundings and proactively warning about dangers, describing environments, reading text, and providing voice-guided navigation.
+
+## Gemini 3 Integration
+
+LiveSight leverages the **Gemini API ecosystem** extensively:
+
+### Gemini Live API (Core Engine)
+- **Real-time multimodal streaming**: Continuous video frames + audio sent to Gemini for instant analysis
+- **Native audio output**: Gemini responds with natural speech, no TTS needed
+- **Bidirectional communication**: Users can speak commands while receiving AI guidance
+- **Context-aware responses**: System instructions dynamically change based on active feature mode
+
+### Key Gemini Features Used
+| Feature | How It's Used |
+|---------|--------------|
+| **Multimodal Input** | Live camera frames (JPEG) + microphone audio streamed simultaneously |
+| **Native Audio Output** | Gemini generates natural speech responses directly |
+| **System Instructions** | Dynamic prompts for 6 different AI modes (Navigation, Traffic, Color, etc.) |
+| **Real-time Processing** | 2-5 FPS video analysis for obstacle/vehicle/traffic light detection |
+| **Voice Commands** | Natural language command detection from user speech transcripts |
+| **Context Switching** | Seamless mode changes via `sendClientContent` without reconnection |
+
+## Features
+
+### 1. Real-Time AI Navigation
+- Continuous camera analysis with spoken guidance
+- Clock-direction system (12 o'clock = ahead, 3 = right, 9 = left)
+- Obstacle detection (stairs, poles, curbs, potholes)
+- Weather-aware surface warnings
+
+### 2. Vehicle Danger Detection
+- 3-tier alert system: Critical / Warning / Awareness
+- Distinct haptic patterns for each danger level
+- Proactive voice alerts for approaching vehicles
+
+### 3. Traffic Light Detection
+- Real-time traffic light state recognition (Red/Green/Yellow/Flashing)
+- Pedestrian signal detection with countdown reading
+- HUD overlay showing current state
+
+### 4. Color & Pattern Recognition
+- Clothing color identification
+- Pattern detection (striped, plaid, floral)
+- Outfit matching suggestions
+
+### 5. Expiration Date Reader
+- OCR-like date detection on product packaging
+- Status classification (Expired / Expiring Soon / Fresh)
+- Product identification
+
+### 6. Emergency SOS System
+- 3-second hold to activate
+- 10-second countdown with cancel option
+- Emergency contact notification
+- Fall detection with auto-SOS
+
+### 7. Explore Mode
+- Detailed environment narration
+- Sign and label reading
+- Place identification (cafes, pharmacies, bus stops)
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────┐
+│                 LiveSight App               │
+├─────────────┬───────────┬───────────────────┤
+│  Camera     │  Audio    │  Feature Modes    │
+│  Feed       │  I/O      │  (6 modes)        │
+├─────────────┴───────────┴───────────────────┤
+│           LiveSightService                  │
+│  ┌─────────────────────────────────────┐    │
+│  │  Gemini Live API Connection          │    │
+│  │  - Video frame streaming (JPEG)     │    │
+│  │  - Audio streaming (PCM 16-bit)     │    │
+│  │  - Response audio playback          │    │
+│  │  - Transcript processing            │    │
+│  │  - Command detection                │    │
+│  │  - Vehicle danger analysis          │    │
+│  └─────────────────────────────────────┘    │
+├─────────────────────────────────────────────┤
+│  Feature Services                           │
+│  - Traffic Light Parser                     │
+│  - Color Detection Parser                   │
+│  - Expiration Date Parser                   │
+│  - SOS Service                              │
+│  - Gamification Engine                      │
+├─────────────────────────────────────────────┤
+│  Native Capabilities (Capacitor)            │
+│  - Haptic Feedback                          │
+│  - Fall Detection (Accelerometer)           │
+│  - Geolocation                              │
+│  - Battery Monitoring                       │
+└─────────────────────────────────────────────┘
+```
 
 ## Tech Stack
 
 | Category | Technology |
 |----------|------------|
-| Frontend | React 19, TypeScript |
-| Build | Vite 6 |
-| Mobile | Capacitor 8 |
-| AI | Google Gemini 2.0 Flash (Live API) |
-| Audio | Web Audio API, PCM 16-bit |
-| Haptics | Capacitor Haptics Plugin |
+| **AI Engine** | Google Gemini Live API |
+| **Frontend** | React 19, TypeScript 5.8 |
+| **Build** | Vite 6 |
+| **Mobile** | Capacitor 8 (Android + iOS) |
+| **Audio** | Web Audio API, PCM 16-bit @ 16kHz/24kHz |
+| **Haptics** | Capacitor Haptics Plugin |
+| **Weather** | Open-Meteo API |
+| **UI** | Tailwind CSS, Custom HUD |
 
 ## Quick Start
 
 ### Prerequisites
 - Node.js 18+
-- Android Studio (for Android builds)
 - Gemini API Key from [Google AI Studio](https://aistudio.google.com/)
 
 ### Installation
 
 ```bash
-# Install dependencies
 npm install
-
-# Development
 npm run dev
-
-# Build for production
-npm run build
-
-# Build for Android
-npm run build:mobile
-npm run android
 ```
 
 ### Environment Setup
 
-Create `.env.local` with your Gemini API key:
-
+Create `.env.local`:
 ```env
-VITE_GEMINI_API_KEY=your_api_key_here
+GEMINI_API_KEY=your_api_key_here
 ```
+
+### Production Build
+
+```bash
+npm run build
+npm run preview
+```
+
+### Mobile Build (Android)
+
+```bash
+npm run build:mobile
+npm run android
+```
+
+## How Gemini Powers LiveSight
+
+1. **User starts the app** - Camera and microphone permissions are requested
+2. **Gemini Live API connection** - WebSocket session established with system instructions
+3. **Continuous streaming** - Video frames (2-5 FPS) and audio sent to Gemini in real-time
+4. **AI analysis** - Gemini analyzes the scene, detects hazards, and generates spoken responses
+5. **Audio playback** - Native audio from Gemini played through speakers with 2.5x volume boost
+6. **Feature parsing** - AI responses parsed for traffic lights, colors, dates, vehicle dangers
+7. **Haptic feedback** - Capacitor vibration patterns triggered for different alert types
+8. **Voice commands** - User speech transcribed and matched against command keywords
 
 ## Project Structure
 
 ```
-livesight/
-├── src/
-│   ├── assets/          # Images, icons
-│   ├── components/      # React components
-│   ├── constants/       # App configuration
-│   ├── features/        # Feature modules
-│   ├── hooks/           # Custom React hooks
-│   ├── services/        # API services
-│   ├── types/           # TypeScript definitions
-│   └── utils/           # Utility functions
-├── android/             # Android native code
-├── ios/                 # iOS native code
-└── dist/                # Production build
-```
-
-## Key Features
-
-### 1. Real-Time AI Vision
-- Continuous camera frame analysis
-- Scene description and object recognition
-- Turkish language responses
-
-### 2. Vehicle Danger Detection
-- Critical, warning, and awareness levels
-- Haptic feedback patterns for each level
-- Voice alerts for approaching vehicles
-
-### 3. Fall Detection
-- Accelerometer-based detection
-- "Are you okay?" check-in system
-- Automatic SOS after 3 unanswered prompts
-
-### 4. Haptic Feedback
-- Native Capacitor Haptics integration
-- Distinct patterns for different alerts
-- Direction cues (left/right/forward/stop)
-
-## API Reference
-
-### LiveSightService
-
-```typescript
-const service = new LiveSightService(
-  apiKey: string,
-  videoElement: HTMLVideoElement,
-  settings: UserSettings,
-  weather: WeatherContext,
-  callbacks: LiveSightCallbacks
-);
-
-await service.start();
-service.stop();
-service.setMute(muted: boolean);
-```
-
-### Hooks
-
-```typescript
-// Haptic feedback
-const { vehicleCritical, vehicleWarning, fallDetected } = useHaptic();
-
-// Fall detection
-const { startMonitoring, confirmOkay, onFallDetected } = useFallDetection();
-
-// Permissions
-const { requestPermissions, permissions } = usePermissions();
-```
-
-## Capacitor Plugins
-
-| Plugin | Version | Purpose |
-|--------|---------|---------|
-| @capacitor/camera | 8.0.0 | Camera access |
-| @capacitor/geolocation | 8.0.0 | Location services |
-| @capacitor/haptics | 8.0.0 | Vibration feedback |
-| @capacitor/share | 8.0.0 | Share location |
-| @capacitor/splash-screen | 8.0.0 | Splash screen |
-| @capacitor/status-bar | 8.0.0 | Status bar control |
-
-## Development
-
-```bash
-# Type check
-npm run type-check
-
-# Lint
-npm run lint
-
-# Format
-npm run format
-
-# Android development
-npm run android:run
+src/
+├── components/      # React UI components (Camera, HUD, Modals)
+├── constants/       # App configuration & AI prompts
+├── contexts/        # React context for global state
+├── features/        # Feature-specific services
+│   ├── color-detection/
+│   ├── expiration/
+│   ├── gamification/
+│   ├── obstacle-detection/
+│   ├── sos/
+│   └── traffic-light/
+├── hooks/           # Custom hooks (haptic, permissions, fall detection)
+├── services/        # Core services (LiveSight, Weather)
+├── types/           # TypeScript definitions
+└── utils/           # Audio utilities
 ```
 
 ## License
 
-MIT License - See [LICENSE](LICENSE) for details.
+MIT License
 
 ---
 
 <div align="center">
 
-**Built with Gemini AI**
+**Built with Google Gemini**
 
 *Empowering independence through AI innovation*
+
+*LiveSight - See Beyond Barriers*
 
 </div>

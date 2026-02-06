@@ -1,7 +1,7 @@
 {
   "name": "livesight",
   "private": true,
-  "version": "1.2.1",
+  "version": "2.0.0",
   "type": "module",
   "description": "See Beyond Barriers - AI-powered navigation assistant empowering visually impaired users to explore the world with confidence",
   "author": "LiveSight Team",
@@ -36,7 +36,7 @@
     "@capacitor/share": "^8.0.0",
     "@capacitor/splash-screen": "^8.0.0",
     "@capacitor/status-bar": "^8.0.0",
-    "@google/genai": "^1.35.0",
+    "@google/genai": "^1.40.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"
   },

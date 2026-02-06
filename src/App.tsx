@@ -80,6 +80,10 @@ const LiveSightApp: React.FC = () => {
     fallDetected: fallHaptic,
   } = useHaptic();
   const { permissions, requestPermissions } = usePermissions();
+  // Request all permissions immediately on mount
+  useEffect(() => {
+    requestPermissions();
+  }, [requestPermissions]);
   const {
     startMonitoring: startFallMonitoring,
     stopMonitoring: stopFallMonitoring,
@@ -186,51 +190,51 @@ const LiveSightApp: React.FC = () => {
     switch (level) {
       case 'critical':
         vehicleCritical();
-        addLog(`🚨 ARAÇ TEHLİKESİ: ${description}`, 'critical', 'vehicle');
-        showToast('ACİL: ARAÇ TEHLİKESİ!', 'error');
+        addLog(`VEHICLE DANGER: ${description}`, 'critical', 'vehicle');
+        showToast('URGENT: VEHICLE DANGER!', 'error');
         break;
       case 'warning':
         vehicleWarning();
-        addLog(`⚠️ Araç yaklaşıyor: ${description}`, 'high', 'vehicle');
+        addLog(`Vehicle approaching: ${description}`, 'high', 'vehicle');
         break;
       case 'awareness':
         vehicleAwareness();
-        addLog(`Araç algılandı: ${description}`, 'medium', 'vehicle');
+        addLog(`Vehicle detected: ${description}`, 'medium', 'vehicle');
         break;
     }
   }, [vehicleCritical, vehicleWarning, vehicleAwareness, addLog, showToast]);
 
   // Test functions for vehicle danger
   const testVehicleCritical = useCallback(() => {
-    handleVehicleDanger('critical', 'TEST: ACİL DURUN! Araba çok yakın, sağınızda 2 metre!');
+    handleVehicleDanger('critical', 'TEST: STOP NOW! Car very close, 2 meters to your right!');
   }, [handleVehicleDanger]);
 
   const testVehicleWarning = useCallback(() => {
-    handleVehicleDanger('warning', 'TEST: UYARI! Otobüs yaklaşıyor, solunuzda 5 metre');
+    handleVehicleDanger('warning', 'TEST: WARNING! Bus approaching, 5 meters to your left');
   }, [handleVehicleDanger]);
 
   const testVehicleAwareness = useCallback(() => {
-    handleVehicleDanger('awareness', 'TEST: Bisiklet algılandı, saat 3 yönünde 10 metre');
+    handleVehicleDanger('awareness', 'TEST: Bicycle detected, 3 o\'clock direction, 10 meters');
   }, [handleVehicleDanger]);
 
   const testFallDetection = useCallback(() => {
     fallHaptic();
-    addLog('⚠️ TEST: DÜŞME ALGILANDI', 'critical');
-    showToast('TEST: Düşme algılandı!', 'warning');
+    addLog('TEST: FALL DETECTED', 'critical');
+    showToast('TEST: Fall detected!', 'warning');
   }, [fallHaptic, addLog, showToast]);
 
   // Handle Fall Detection
   const handleFallDetected = useCallback(() => {
     fallHaptic();
-    addLog('⚠️ DÜŞME ALGILANDI - Kullanıcı kontrol ediliyor', 'critical');
-    showToast('Düşme algılandı! İyi misiniz?', 'warning');
+    addLog('FALL DETECTED - Checking on user', 'critical');
+    showToast('Fall detected! Are you okay?', 'warning');
   }, [fallHaptic, addLog, showToast]);
 
   // Handle Auto-SOS from fall detection
   const handleAutoSOS = useCallback(() => {
     if (emergencyContacts.length > 0) {
       const event = createSOSEvent(location, batteryLevel, emergencyContacts);
-      handleSOSTrigger({ ...event, message: 'Düşme algılandı - otomatik SOS' });
+      handleSOSTrigger({ ...event, message: 'Fall detected - automatic SOS' });
     }
   }, [emergencyContacts, location, batteryLevel, handleSOSTrigger]);
 
@@ -329,13 +333,13 @@ const LiveSightApp: React.FC = () => {
     }
 
     const colorMap: Record<string, string> = {
-      red: '🔴 KRMIZI',
-      green: '🟢 YEŞİL',
-      yellow: '🟡 SARI',
-      flashing: '⚠️ YANIP SÖNEN',
-      unknown: '⚪ BELİRSİZ'
+      red: 'RED',
+      green: 'GREEN',
+      yellow: 'YELLOW',
+      flashing: 'FLASHING',
+      unknown: 'UNKNOWN'
     };
-    const text = `Trafik Işığı: ${colorMap[detection.state] || detection.state}`;
+    const text = `Traffic Light: ${colorMap[detection.state] || detection.state}`;
     showToast(text, detection.state === 'green' ? 'success' : 'warning');
     addLog(text, detection.state === 'red' ? 'high' : 'medium', 'vehicle');
   }, [showToast, addLog]);
@@ -344,7 +348,7 @@ const LiveSightApp: React.FC = () => {
   const handleColorDetected = useCallback((result: ColorDetectionResult) => {
     setLastColorDetection(result); // Update HUD state
     vehicleAwareness(); // Light tap
-    const text = `Renk: ${result.primary.name} ${result.pattern ? `(${result.pattern})` : ''}`;
+    const text = `Color: ${result.primary.name} ${result.pattern ? `(${result.pattern})` : ''}`;
     showToast(text, 'info');
     addLog(text, 'low');
   }, [showToast, addLog]);
@@ -358,15 +362,15 @@ const LiveSightApp: React.FC = () => {
     let type: 'success' | 'warning' | 'error' | 'info' = 'info';
 
     if (result.status === 'expired') {
-      text = `⚠️ SON KULLANMA GEÇMİŞ: ${result.dateString}`;
+      text = `EXPIRED: ${result.dateString}`;
       type = 'error';
       hazardAlert();
     } else if (result.status === 'expiring_soon') {
-      text = `⚠️ YAKINDA BOZULACAK: ${result.dateString}`;
+      text = `EXPIRING SOON: ${result.dateString}`;
       type = 'warning';
       vehicleWarning();
     } else {
-      text = `✅ TAZE: ${result.dateString}`;
+      text = `FRESH: ${result.dateString}`;
       type = 'success';
       successFeedback();
     }
@@ -410,7 +414,7 @@ const LiveSightApp: React.FC = () => {
     startFeedback();
     setIsLive(true);
     setStatus('connecting');
-    setTranscript('Bağlanıyor...');
+    setTranscript('Connecting...');
 
     const service = new LiveSightService(
       keyToUse,
@@ -637,43 +641,43 @@ const LiveSightApp: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              <p className="text-xs text-gray-500 font-mono">ARAÇ TEHLİKE TESTİ</p>
+              <p className="text-xs text-gray-500 font-mono">VEHICLE DANGER TEST</p>
 
               <button
                 onClick={testVehicleCritical}
                 className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2"
               >
-                <span>🚨</span> KRİTİK - Araç Çok Yakın!
+                CRITICAL - Vehicle Too Close!
               </button>
 
               <button
                 onClick={testVehicleWarning}
                 className="w-full py-3 bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl transition flex items-center justify-center gap-2"
               >
-                <span>⚠️</span> UYARI - Araç Yaklaşıyor
+                WARNING - Vehicle Approaching
               </button>
 
               <button
                 onClick={testVehicleAwareness}
                 className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2"
               >
-                <span>📍</span> FARKINDALIK - Araç Algılandı
+                AWARENESS - Vehicle Detected
               </button>
             </div>
 
             <div className="pt-4 border-t border-gray-700 space-y-3">
-              <p className="text-xs text-gray-500 font-mono">DİĞER TESTLER</p>
+              <p className="text-xs text-gray-500 font-mono">OTHER TESTS</p>
 
               <button
                 onClick={testFallDetection}
                 className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2"
               >
-                <span>🏃</span> Düşme Algılama Testi
+                Fall Detection Test
               </button>
             </div>
 
             <p className="text-[10px] text-gray-600 text-center mt-4">
-              Her buton ilgili haptic geri bildirimi tetikler
+              Each button triggers the corresponding haptic feedback
             </p>
           </div>
         </div>

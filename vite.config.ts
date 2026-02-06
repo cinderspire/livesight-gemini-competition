@@ -40,12 +40,13 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       sourcemap: true,
-      minify: false, // Disable minification to avoid bundling issues with @google/genai
+      minify: 'esbuild',
       target: 'es2022',
       rollupOptions: {
         output: {
           manualChunks: {
             react: ['react', 'react-dom'],
+            genai: ['@google/genai'],
           },
         },
       },

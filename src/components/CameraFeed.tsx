@@ -197,10 +197,10 @@ const CameraFeed: React.FC<CameraFeedProps> = memo(({ onVideoReady, isActive, is
                       lastTrafficDetection.state === 'yellow' ? 'text-yellow-500 border-yellow-500' :
                         'text-gray-400 border-gray-400'
                     }`}>
-                    {lastTrafficDetection.state === 'red' ? 'DUR (STOP)' :
-                      lastTrafficDetection.state === 'green' ? 'GEÇ (GO)' :
-                        lastTrafficDetection.state === 'yellow' ? 'HAZIRLAN (WAIT)' :
-                          'TARANIYOR...'}
+                    {lastTrafficDetection.state === 'red' ? 'STOP' :
+                      lastTrafficDetection.state === 'green' ? 'GO' :
+                        lastTrafficDetection.state === 'yellow' ? 'WAIT' :
+                          'SCANNING...'}
                   </div>
                 </div>
               )}
@@ -213,10 +213,10 @@ const CameraFeed: React.FC<CameraFeedProps> = memo(({ onVideoReady, isActive, is
                     style={{ backgroundColor: lastColorDetection.primary.hex }}
                   />
                   <div className="flex flex-col">
-                    <span className="text-xs text-gray-400 font-mono uppercase tracking-wider">ALGILANAN RENK</span>
+                    <span className="text-xs text-gray-400 font-mono uppercase tracking-wider">DETECTED COLOR</span>
                     <span className="text-xl font-bold capitalize">{lastColorDetection.primary.name}</span>
                     {lastColorDetection.pattern && (
-                      <span className="text-sm text-cyan-400">{lastColorDetection.pattern} Deseni</span>
+                      <span className="text-sm text-cyan-400">{lastColorDetection.pattern} pattern</span>
                     )}
                   </div>
                 </div>
@@ -234,9 +234,9 @@ const CameraFeed: React.FC<CameraFeedProps> = memo(({ onVideoReady, isActive, is
                         'bg-green-900/80 border-green-500'
                       }`}>
                       <span className="text-xs font-mono uppercase opacity-80 mb-1">
-                        {lastExpirationDetection.status === 'expired' ? '⚠️ SÜRESİ DOLMUŞ' :
-                          lastExpirationDetection.status === 'expiring_soon' ? '⚠️ YAKINDA DOLACAK' :
-                            '✅ GÜVENLİ'}
+                        {lastExpirationDetection.status === 'expired' ? 'EXPIRED' :
+                          lastExpirationDetection.status === 'expiring_soon' ? 'EXPIRING SOON' :
+                            'SAFE'}
                       </span>
                       <span className="text-3xl font-bold tracking-widest font-mono">
                         {lastExpirationDetection.dateString}

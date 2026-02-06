@@ -1,6 +1,6 @@
 {
   "name": "LiveSight - Proactive AI Vision",
-  "description": "A proactive navigation assistant for the visually impaired using Gemini Live API to predict hazards before they happen.",
+  "description": "AI-powered real-time navigation assistant for the visually impaired, built with Google Gemini Live API. Features multimodal streaming, vehicle danger detection, traffic light recognition, and voice-guided exploration.",
   "requestFramePermissions": [
     "camera",
     "microphone",

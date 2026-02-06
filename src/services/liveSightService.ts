@@ -139,6 +139,19 @@ GENERAL RULES:
   }
 
   /**
+   * Update user location and notify AI for navigation context
+   */
+  public updateLocation(lat: number, lon: number, extras?: { accuracy?: number; heading?: number; speed?: number }): void {
+    if (this.session && this.isConnected) {
+      let msg = `LOCATION_UPDATE: lat=${lat.toFixed(6)}, lon=${lon.toFixed(6)}`;
+      if (extras?.heading != null) msg += `, heading=${Math.round(extras.heading)}°`;
+      if (extras?.speed != null) msg += `, speed=${(extras.speed * 3.6).toFixed(1)}km/h`;
+      if (extras?.accuracy != null) msg += `, accuracy=${Math.round(extras.accuracy)}m`;
+      this.sendTextMessage(msg);
+    }
+  }
+
+  /**
    * Send a text message to the AI via client content
    */
   private sendTextMessage(message: string): void {

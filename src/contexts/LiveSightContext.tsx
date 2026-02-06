@@ -124,7 +124,7 @@ export function LiveSightProvider({ children }: LiveSightProviderProps): React.J
   }, []);
 
   /**
-   * Fetch weather data on mount
+   * Continuous GPS tracking + weather fetch
    */
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -132,17 +132,31 @@ export function LiveSightProvider({ children }: LiveSightProviderProps): React.J
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        setLocation({ lat: latitude, lon: longitude });
+    let weatherFetched = false;
 
-        try {
-          const weatherData = await fetchWeather(latitude, longitude);
-          setWeather(weatherData);
-        } catch (error) {
-          console.error('[Context] Weather fetch failed:', error);
-          setWeather({ ...DEFAULT_WEATHER, condition: 'Unavailable' } as WeatherContext);
+    // Start continuous watching for real-time navigation
+    const watchId = navigator.geolocation.watchPosition(
+      async (position) => {
+        const { latitude, longitude, accuracy, heading, speed } = position.coords;
+        setLocation({
+          lat: latitude,
+          lon: longitude,
+          accuracy: accuracy ?? undefined,
+          heading: heading ?? undefined,
+          speed: speed ?? undefined,
+          timestamp: position.timestamp,
+        });
+
+        // Fetch weather once on first position
+        if (!weatherFetched) {
+          weatherFetched = true;
+          try {
+            const weatherData = await fetchWeather(latitude, longitude);
+            setWeather(weatherData);
+          } catch (error) {
+            console.error('[Context] Weather fetch failed:', error);
+            setWeather({ ...DEFAULT_WEATHER, condition: 'Unavailable' } as WeatherContext);
+          }
         }
       },
       (error) => {
@@ -151,10 +165,14 @@ export function LiveSightProvider({ children }: LiveSightProviderProps): React.J
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000, // 5 minutes
+        timeout: 15000,
+        maximumAge: 5000, // Fresh positions for navigation
       }
     );
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
   }, []);
 
   /**

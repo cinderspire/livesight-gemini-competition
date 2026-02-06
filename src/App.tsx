@@ -125,6 +125,21 @@ const LiveSightApp: React.FC = () => {
     }
   }, [activeFeature, isLive]);
 
+  // Sync GPS Location to Active Service
+  useEffect(() => {
+    if (serviceRef.current && isLive && location) {
+      serviceRef.current.updateLocation(
+        location.lat,
+        location.lon,
+        {
+          accuracy: location.accuracy,
+          heading: location.heading,
+          speed: location.speed,
+        }
+      );
+    }
+  }, [location, isLive]);
+
   // Initialize API Key
   useEffect(() => {
     const initKey = async () => {

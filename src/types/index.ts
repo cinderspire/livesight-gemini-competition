@@ -337,6 +337,9 @@ export interface LiveSightCallbacks {
   onExpirationDate?: (result: ExpirationDateResult) => void;
   onSOSTriggered?: (event: SOSEvent) => void;
   onAchievement?: (achievement: Achievement) => void;
+  // Function calling callbacks
+  onModeSwitch?: (mode: string, reason?: string) => void;
+  onEmergency?: (reason: string) => void;
 }
 
 // ============================================

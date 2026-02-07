@@ -1,15 +1,74 @@
-import { GoogleGenAI, LiveServerMessage, Modality, Session } from '@google/genai';
+import { GoogleGenAI, LiveServerMessage, Modality, Session, Type, type FunctionDeclaration } from '@google/genai';
 import { createPcmBlob, decodeAudioData, base64ToUint8Array } from '../utils/audioUtils';
 import type { UserSettings, WeatherContext, VoiceCommand, LiveSightCallbacks, VehicleDangerLevel } from '../types';
 import { AUDIO_CONFIG, VIDEO_CONFIG, AI_CONFIG, URGENT_KEYWORDS, COMMAND_KEYWORDS, VEHICLE_DANGER_CONFIG, MODE_PROMPTS } from '../constants';
 import { parseTrafficLightResponse } from '../features/traffic-light/trafficLightService';
 import { parseColorResponse } from '../features/color-detection/colorService';
 import { parseExpirationResponse } from '../features/expiration/expirationService';
+import { parseObstacleResponse, sortObstaclesByPriority, getObstacleAnnouncement } from '../features/obstacle-detection/obstacleService';
 
-// Connection timeout in milliseconds
 // Connection timeout in milliseconds
 const CONNECTION_TIMEOUT = 30000; // Increased to 30s for stability
 const RECONNECT_DELAY = 1000; // 1 second between reconnects
+
+/**
+ * Gemini Function Calling Tool Declarations
+ * These allow the AI to trigger structured app actions
+ */
+const FUNCTION_DECLARATIONS: FunctionDeclaration[] = [
+  {
+    name: 'reportObstacle',
+    description: 'Report a detected obstacle with structured data for haptic feedback and logging',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        type: { type: Type.STRING, description: 'Obstacle type (e.g. pole, stairs, pothole, curb, vehicle)' },
+        direction: { type: Type.NUMBER, description: 'Clock direction 1-12 (12=ahead, 3=right, 9=left)' },
+        distance: { type: Type.NUMBER, description: 'Estimated distance in meters' },
+        severity: { type: Type.STRING, description: 'Danger severity: critical, warning, or info' },
+      },
+      required: ['type', 'direction', 'severity'],
+    },
+  },
+  {
+    name: 'switchMode',
+    description: 'Switch the app to a different feature mode when the user requests it or when context suggests it',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        mode: { type: Type.STRING, description: 'Target mode: navigation, traffic, color, expiration, explore, or community' },
+        reason: { type: Type.STRING, description: 'Brief reason for switching' },
+      },
+      required: ['mode'],
+    },
+  },
+  {
+    name: 'triggerEmergency',
+    description: 'Trigger emergency SOS when the user is in immediate danger or requests help',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        reason: { type: Type.STRING, description: 'Reason for emergency (e.g. fall detected, user in danger)' },
+      },
+      required: ['reason'],
+    },
+  },
+  {
+    name: 'announceEnvironment',
+    description: 'Provide a structured environment summary for the user',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        description: { type: Type.STRING, description: 'Brief environment description' },
+        safetyLevel: { type: Type.STRING, description: 'Overall safety: safe, caution, or danger' },
+        nearbyLandmarks: { type: Type.STRING, description: 'Comma-separated list of nearby notable places or features' },
+      },
+      required: ['description', 'safetyLevel'],
+    },
+  },
+];
+
+const LIVE_API_TOOLS = [{ functionDeclarations: FUNCTION_DECLARATIONS }];
 
 /**
  * LiveSight Service
@@ -61,31 +120,38 @@ export class LiveSightService {
    * Generate system instruction based on current settings and context
    */
 
+  /**
+   * Get the configured voice name based on user settings
+   */
+  private getVoiceName(): string {
+    return AI_CONFIG.VOICE_MAP[this.settings.voiceType] || AI_CONFIG.VOICE_NAME;
+  }
+
   private getSystemInstruction(activeFeature: string = 'navigation'): string {
     // Select the appropriate prompt based on active feature
-    let prompt: string = MODE_PROMPTS.NAVIGATION; // Default strategy
+    const prompts: Record<string, string> = {
+      traffic: MODE_PROMPTS.TRAFFIC_LIGHT,
+      color: MODE_PROMPTS.COLOR,
+      expiration: MODE_PROMPTS.EXPIRATION,
+      explore: MODE_PROMPTS.EXPLORE,
+      community: MODE_PROMPTS.COMMUNITY,
+    };
+    const prompt = prompts[activeFeature] || MODE_PROMPTS.NAVIGATION;
 
-    switch (activeFeature) {
-      case 'traffic':
-        prompt = MODE_PROMPTS.TRAFFIC_LIGHT;
-        break;
-      case 'color':
-        prompt = MODE_PROMPTS.COLOR;
-        break;
-      case 'expiration':
-        prompt = MODE_PROMPTS.EXPIRATION;
-        break;
-      case 'explore':
-        prompt = MODE_PROMPTS.EXPLORE;
-        break;
-      case 'community':
-        prompt = MODE_PROMPTS.COMMUNITY;
-        break;
-      case 'navigation':
-      default:
-        prompt = MODE_PROMPTS.NAVIGATION;
-        break;
-    }
+    // Language instruction based on settings
+    const langMap: Record<string, string> = {
+      en: 'English', tr: 'Turkish', es: 'Spanish', de: 'German',
+      fr: 'French', ar: 'Arabic', zh: 'Chinese', ja: 'Japanese',
+    };
+    const preferredLang = langMap[this.settings.language] || 'English';
+
+    // Speed instruction
+    const speedMap: Record<string, string> = {
+      slow: 'Speak slowly and clearly, with pauses between sentences.',
+      normal: 'Speak at a normal conversational pace.',
+      fast: 'Speak quickly and concisely, minimize pauses.',
+    };
+    const speedInstruction = speedMap[this.settings.voiceSpeed] || '';
 
     // Append general behavior rules that apply to all modes
     return `${prompt}
@@ -94,7 +160,9 @@ GENERAL RULES:
 - Keep responses short (Max 1-2 sentences).
 - Do not say "OK" or "Got it" unless it's an emergency confirmation.
 - Sound natural and reassuring.
-- Adapt language to the user (respond in the same language they speak).`;
+- Preferred language: ${preferredLang}. If the user speaks a different language, adapt to their language.
+- ${speedInstruction}
+- User's mobility aid: ${this.settings.mobilityAid}. Adapt guidance accordingly.`;
   }
 
   /**
@@ -235,9 +303,10 @@ GENERAL RULES:
           responseModalities: [Modality.AUDIO],
           speechConfig: {
             voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: AI_CONFIG.VOICE_NAME }
+              prebuiltVoiceConfig: { voiceName: this.getVoiceName() }
             }
           },
+          tools: LIVE_API_TOOLS,
         },
         callbacks: {
           onopen: () => {
@@ -378,9 +447,10 @@ GENERAL RULES:
           responseModalities: [Modality.AUDIO],
           speechConfig: {
             voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: AI_CONFIG.VOICE_NAME }
+              prebuiltVoiceConfig: { voiceName: this.getVoiceName() }
             }
           },
+          tools: LIVE_API_TOOLS,
         },
         callbacks: {
           onopen: () => {
@@ -543,6 +613,16 @@ GENERAL RULES:
    * Handle incoming messages from AI
    */
   private async handleServerMessage(message: LiveServerMessage): Promise<void> {
+    // 0. Process Function Calls from AI
+    const toolCall = message.toolCall;
+    if (toolCall?.functionCalls) {
+      for (const fc of toolCall.functionCalls) {
+        if (fc.name) {
+          this.handleFunctionCall(fc.name, (fc.args || {}) as Record<string, unknown>, fc.id || '');
+        }
+      }
+    }
+
     // 1. Process Audio Output
     const audioData = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
     if (audioData && this.outputAudioContext) {
@@ -608,6 +688,23 @@ GENERAL RULES:
             }
           } catch (e) {
             console.warn('[LiveSight] Expiration parse error:', e);
+          }
+        }
+
+        // --- OBSTACLE DETECTION (Navigation mode) ---
+        if (this.activeFeature === 'navigation') {
+          try {
+            const obstacles = parseObstacleResponse(trimmedText);
+            if (obstacles.length > 0) {
+              const sorted = sortObstaclesByPriority(obstacles);
+              const top = sorted[0];
+              if (top && (top.riskLevel === 'critical' || top.riskLevel === 'high')) {
+                const announcement = getObstacleAnnouncement(top);
+                this.callbacks.onHazard(announcement);
+              }
+            }
+          } catch (e) {
+            console.warn('[LiveSight] Obstacle parse error:', e);
           }
         }
 
@@ -711,6 +808,86 @@ GENERAL RULES:
       // This is faster than reconnecting and usually works for context switching
       const updateMsg = `SYSTEM_UPDATE: Active Mode changed to ${feature.toUpperCase()}.\n\nNEW INSTRUCTIONS:\n${instruction}`;
       this.sendTextMessage(updateMsg);
+    }
+  }
+
+  /**
+   * Handle function calls from Gemini AI
+   */
+  private handleFunctionCall(name: string, args: Record<string, unknown>, callId?: string): void {
+    console.log(`[LiveSight] Function call: ${name}`, args);
+
+    let result: Record<string, unknown> = { success: true };
+
+    switch (name) {
+      case 'reportObstacle': {
+        const severity = args.severity as string;
+        const type = args.type as string || 'obstacle';
+        const direction = args.direction as number || 12;
+        const distance = args.distance as number;
+
+        const desc = `${type} at ${direction} o'clock${distance ? `, ${distance}m` : ''}`;
+
+        if (severity === 'critical') {
+          this.callbacks.onHazard(`DANGER! ${desc}`);
+          if (this.callbacks.onVehicleDanger) {
+            this.callbacks.onVehicleDanger('critical', desc);
+          }
+        } else if (severity === 'warning') {
+          this.callbacks.onHazard(`WARNING: ${desc}`);
+        }
+        result = { reported: true, severity };
+        break;
+      }
+
+      case 'switchMode': {
+        const mode = args.mode as string;
+        const reason = args.reason as string;
+        if (this.callbacks.onModeSwitch) {
+          this.callbacks.onModeSwitch(mode, reason);
+        }
+        result = { switched: true, mode };
+        break;
+      }
+
+      case 'triggerEmergency': {
+        const reason = args.reason as string || 'AI detected emergency';
+        if (this.callbacks.onEmergency) {
+          this.callbacks.onEmergency(reason);
+        }
+        result = { triggered: true };
+        break;
+      }
+
+      case 'announceEnvironment': {
+        const description = args.description as string;
+        const safetyLevel = args.safetyLevel as string;
+        if (description) {
+          this.callbacks.onTranscript(description, false);
+        }
+        if (safetyLevel === 'danger') {
+          this.callbacks.onHazard(description || 'Dangerous area detected');
+        }
+        result = { announced: true };
+        break;
+      }
+
+      default:
+        result = { error: `Unknown function: ${name}` };
+    }
+
+    // Send function response back to Gemini
+    if (this.session && callId) {
+      try {
+        this.session.sendToolResponse({
+          functionResponses: [{
+            id: callId,
+            response: result,
+          }],
+        });
+      } catch (e) {
+        console.warn('[LiveSight] Failed to send tool response:', e);
+      }
     }
   }
 

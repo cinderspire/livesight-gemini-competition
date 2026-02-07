@@ -242,13 +242,7 @@ const SettingsModal: React.FC<SettingsModalProps> = memo(({ isOpen, onClose }) =
                 </div>
               </fieldset>
 
-              {/* Spatial Audio */}
-              <ToggleSwitch
-                label="Spatial Audio"
-                description="3D audio cues for directions"
-                checked={settings.spatialAudio}
-                onChange={() => handleToggle('spatialAudio')}
-              />
+              {/* Note: Spatial Audio removed - not yet implemented */}
             </>
           )}
 
@@ -291,14 +285,6 @@ const SettingsModal: React.FC<SettingsModalProps> = memo(({ isOpen, onClose }) =
           {/* Advanced Tab */}
           {activeTab === 'advanced' && (
             <>
-              {/* Offline Mode */}
-              <ToggleSwitch
-                label="Offline Mode"
-                description="Cache maps and routes for offline use"
-                checked={settings.offlineMode}
-                onChange={() => handleToggle('offlineMode')}
-              />
-
               {/* Quiet Hours */}
               <div className="space-y-3">
                 <ToggleSwitch
@@ -342,10 +328,14 @@ const SettingsModal: React.FC<SettingsModalProps> = memo(({ isOpen, onClose }) =
               <div className="p-4 bg-gray-900/50 rounded-xl border border-gray-800 space-y-2">
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-500">Version</span>
-                  <span className="text-gray-300 font-mono">1.0.0</span>
+                  <span className="text-gray-300 font-mono">2.0.0</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-gray-500">AI Model</span>
+                  <span className="text-gray-500">AI Engine</span>
+                  <span className="text-gray-300 font-mono">Gemini Live API</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-500">Model</span>
                   <span className="text-gray-300 font-mono">Gemini 2.5 Flash</span>
                 </div>
               </div>

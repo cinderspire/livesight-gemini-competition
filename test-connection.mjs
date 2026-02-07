@@ -4,7 +4,12 @@
  */
 import { GoogleGenAI, Modality } from '@google/genai';
 
-const API_KEY = process.argv[2] || 'AIzaSyBRNdzIWTZs8ntlvSYMbZEuDqoV9MeGeAs';
+const API_KEY = process.argv[2] || process.env.GEMINI_API_KEY || '';
+if (!API_KEY) {
+  console.error('Usage: node test-connection.mjs YOUR_API_KEY');
+  console.error('Or set GEMINI_API_KEY environment variable');
+  process.exit(1);
+}
 
 console.log('='.repeat(50));
 console.log('Gemini Live API Connection Test');

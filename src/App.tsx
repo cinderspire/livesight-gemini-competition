@@ -21,6 +21,9 @@ import type { SOSEvent, VehicleDangerLevel, TrafficLightDetection, ColorDetectio
 
 // Import feature services
 import { notifyContacts, createSOSEvent } from './features/sos/sosService';
+import { awardPoints, checkBadgeEligibility, updateStreak, recordNavigation } from './features/gamification/gamificationService';
+import StatsCard from './components/StatsCard';
+import type { ActiveFeature } from './types';
 
 /**
  * Main LiveSight Application Component
@@ -46,7 +49,9 @@ const LiveSightApp: React.FC = () => {
     setLastTrafficDetection,
     setLastColorDetection,
     setLastExpirationDetection,
-    batteryLevel
+    batteryLevel,
+    userStats,
+    updateStats,
   } = useLiveSight();
 
   // Local State
@@ -60,6 +65,7 @@ const LiveSightApp: React.FC = () => {
   const [apiKey, setApiKey] = useState<string>('');
   const [manualKeyInput, setManualKeyInput] = useState('');
   const [showTestPanel, setShowTestPanel] = useState(false);
+  const sessionStartRef = useRef<number>(0);
 
   // Refs
   const videoElementRef = useRef<HTMLVideoElement | null>(null);
@@ -315,11 +321,53 @@ const LiveSightApp: React.FC = () => {
           showToast('No emergency contacts configured', 'error');
         }
         break;
+      case 'CANCEL_SOS':
+        showToast('SOS Cancelled', 'info');
+        break;
+      case 'FIND_NEARBY':
+        setActiveFeature('explore');
+        showToast('Explore Mode: ON', 'success');
+        break;
+      case 'NAVIGATE_TO':
+        setActiveFeature('navigation');
+        showToast('Navigation Mode: ON', 'success');
+        break;
+      case 'REPORT_HAZARD': {
+        addLog('User reported hazard via voice', 'high');
+        const { newStats: hazardStats } = awardPoints(userStats, 'HAZARD_REPORTED');
+        updateStats(hazardStats);
+        showToast('Hazard reported! +15 points', 'success');
+        break;
+      }
+      case 'SHARE_LOCATION':
+        if (location) {
+          const url = `https://maps.google.com/?q=${location.lat},${location.lon}`;
+          navigator.clipboard?.writeText(url);
+          showToast('Location copied to clipboard', 'success');
+        } else {
+          showToast('GPS not available', 'warning');
+        }
+        break;
       case 'BATTERY_STATUS':
         showToast(`Battery: ${batteryLevel}%`, batteryLevel < 20 ? 'warning' : 'info');
         break;
       case 'WEATHER_UPDATE':
         showToast(`${weather.condition}, ${weather.temperature}°C`, 'info');
+        break;
+      case 'SYSTEM_STATUS':
+        showToast(`${status === 'connected' ? 'Connected' : status} | Battery: ${batteryLevel}% | ${weather.condition}`, 'info');
+        break;
+      case 'READ_EXPIRATION':
+        setActiveFeature('expiration');
+        showToast('Expiration Reader Mode: ON', 'success');
+        break;
+      case 'CHECK_TRAFFIC_LIGHT':
+        setActiveFeature('traffic');
+        showToast('Traffic Light Mode: ON', 'success');
+        break;
+      case 'DESCRIBE_COLOR':
+        setActiveFeature('color');
+        showToast('Color Detection Mode: ON', 'success');
         break;
     }
   }, [
@@ -332,6 +380,11 @@ const LiveSightApp: React.FC = () => {
     handleSOSTrigger,
     weather,
     showToast,
+    setActiveFeature,
+    addLog,
+    userStats,
+    updateStats,
+    status,
   ]);
 
   // Handle Traffic Light Detection
@@ -430,6 +483,7 @@ const LiveSightApp: React.FC = () => {
     setIsLive(true);
     setStatus('connecting');
     setTranscript('Connecting...');
+    sessionStartRef.current = Date.now();
 
     const service = new LiveSightService(
       keyToUse,
@@ -454,6 +508,9 @@ const LiveSightApp: React.FC = () => {
         onHazard: (text) => {
           hazardAlert();
           addLog(text, 'high');
+          // Award points for hazard detection
+          const { newStats: pts } = awardPoints(userStats, 'HAZARD_REPORTED');
+          updateStats(pts);
         },
         onVolume: (level) => {
           setVolume(level);
@@ -463,6 +520,18 @@ const LiveSightApp: React.FC = () => {
         onTrafficLight: handleTrafficLight, // Traffic Light callback
         onColorDetected: handleColorDetected, // Color callback
         onExpirationDate: handleExpirationDate, // Expiration callback
+        // Function calling callbacks
+        onModeSwitch: (mode: string, reason?: string) => {
+          setActiveFeature(mode as ActiveFeature);
+          showToast(`AI switched to ${mode.toUpperCase()} mode${reason ? `: ${reason}` : ''}`, 'info');
+        },
+        onEmergency: (reason: string) => {
+          if (emergencyContacts.length > 0) {
+            const event = createSOSEvent(location, batteryLevel, emergencyContacts);
+            handleSOSTrigger({ ...event, message: `AI Emergency: ${reason}` });
+          }
+          showToast(`EMERGENCY: ${reason}`, 'error');
+        },
       }
     );
 
@@ -487,10 +556,34 @@ const LiveSightApp: React.FC = () => {
     handleVehicleDanger,
     startFallMonitoring,
     stopFallMonitoring,
+    setActiveFeature,
+    handleSOSTrigger,
+    userStats,
+    updateStats,
   ]);
 
-  // Stop LiveSight
+  // Stop LiveSight + award gamification points
   const stopLiveSight = useCallback(() => {
+    // Award points for completed navigation session
+    if (sessionStartRef.current > 0) {
+      const duration = Date.now() - sessionStartRef.current;
+      if (duration > 10000) { // Only count sessions longer than 10 seconds
+        const navStats = recordNavigation(userStats, Math.round(duration / 1000));
+        const streakStats = updateStreak(userStats);
+        const merged = { ...userStats, ...navStats, ...streakStats };
+        updateStats(merged);
+
+        // Check for new badges
+        const newBadges = checkBadgeEligibility(merged as typeof userStats);
+        if (newBadges.length > 0) {
+          const allBadges = [...(userStats.badges || []), ...newBadges];
+          updateStats({ badges: allBadges });
+          showToast(`Badge earned: ${newBadges[0]?.name}!`, 'achievement');
+        }
+      }
+      sessionStartRef.current = 0;
+    }
+
     serviceRef.current?.stop();
     serviceRef.current = null;
     isStartingRef.current = false;
@@ -500,7 +593,7 @@ const LiveSightApp: React.FC = () => {
     setVolume(0);
     stopFallMonitoring();
     successFeedback();
-  }, [setStatus, setTranscript, setVolume, successFeedback, stopFallMonitoring]);
+  }, [setStatus, setTranscript, setVolume, successFeedback, stopFallMonitoring, userStats, updateStats, showToast]);
 
   // Toggle LiveSight
   const toggleLiveSight = useCallback(() => {
@@ -856,6 +949,9 @@ const LiveSightApp: React.FC = () => {
 
         {/* SIDE: DATA LOGS (Desktop only) */}
         <aside className="hidden lg:flex w-72 flex-col gap-3" aria-label="Hazard logs">
+          {/* Stats Card - Compact */}
+          <StatsCard stats={userStats} compact />
+
           {/* Logs Panel */}
           <div className="flex-1 bg-gray-900/40 backdrop-blur-md border border-gray-800 rounded-2xl p-4 flex flex-col overflow-hidden">
             <div className="flex justify-between items-center mb-3 border-b border-gray-800 pb-2">

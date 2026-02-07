@@ -392,11 +392,26 @@ GENERAL RULES:
    */
   private handleConnectionClose(_event: CloseEvent): void {
     this.clearConnectionTimeout();
+    console.warn('[LiveSight] Connection closed:', _event.code, _event.reason);
 
+    // Stop video streaming immediately to prevent sends to closed socket
+    if (this.videoInterval) {
+      clearInterval(this.videoInterval);
+      this.videoInterval = null;
+    }
 
     if (this.isConnected) {
       this.isConnected = false;
       this.session = null;
+
+      // Do NOT reconnect if API key is invalid/leaked
+      const reason = _event.reason || '';
+      if (reason.includes('leaked') || reason.includes('API key') || reason.includes('invalid')) {
+        this.callbacks.onTranscript('API key is invalid or disabled. Please generate a new key at aistudio.google.com/apikey', false);
+        this.callbacks.onStatusChange('error');
+        this.cleanup();
+        return;
+      }
 
       // Try to reconnect if enabled and within limits
       if (this.shouldReconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
@@ -545,7 +560,8 @@ GENERAL RULES:
    */
   private sendRealtimeInput(): void {
     const ctx = this.canvas.getContext('2d');
-    if (!ctx || !this.isConnected || !this.session || !this.videoElement || this.videoElement.paused) return;
+    const session = this.session;
+    if (!ctx || !this.isConnected || !session || !this.videoElement || this.videoElement.paused) return;
 
     try {
       this.canvas.width = VIDEO_CONFIG.WIDTH;
@@ -555,13 +571,13 @@ GENERAL RULES:
       const dataUrl = this.canvas.toDataURL('image/jpeg', VIDEO_CONFIG.JPEG_QUALITY);
       const base64Data = dataUrl.split(',')[1];
 
-      if (base64Data) {
-        this.session.sendRealtimeInput({
+      if (base64Data && this.isConnected) {
+        session.sendRealtimeInput({
           media: { mimeType: 'image/jpeg', data: base64Data }
         });
       }
-    } catch (e) {
-      console.warn('[LiveSight] Video frame send failed:', e);
+    } catch {
+      // Silently ignore send failures (connection may be closing)
     }
   }
 
@@ -590,13 +606,12 @@ GENERAL RULES:
       this.callbacks.onVolume(visualLevel);
 
       // Send audio if not muted
-      if (!this.isMuted) {
+      if (!this.isMuted && this.isConnected && this.session) {
         try {
           const pcmBlob = createPcmBlob(inputData);
-          // Use 'audio' parameter instead of 'media' for audio data
           this.session.sendRealtimeInput({ audio: pcmBlob });
-        } catch (e) {
-          console.warn('[LiveSight] Audio send failed:', e);
+        } catch {
+          // Silently ignore send failures (connection may be closing)
         }
       }
     };

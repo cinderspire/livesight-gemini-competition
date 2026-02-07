@@ -13,7 +13,7 @@ const ai = new GoogleGenAI({
 });
 
 const session = await ai.live.connect({
-  model: 'gemini-2.0-flash-exp',
+  model: 'gemini-2.5-flash-native-audio-preview',
   config: {
     systemInstruction: '...',
     responseModalities: [Modality.AUDIO],
@@ -301,7 +301,7 @@ VIDEO_CONFIG = {
 
 ```typescript
 AI_CONFIG = {
-  MODEL_NAME: 'gemini-2.0-flash-exp',
+  MODEL_NAME: 'gemini-2.5-flash-native-audio-preview',
   VOICE_NAME: 'Kore',
   API_VERSION: 'v1alpha'
 }

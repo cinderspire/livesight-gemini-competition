@@ -43,10 +43,10 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                    GOOGLE GEMINI LIVE API                        │
 │  ┌─────────────────────────────────────────────────────────────┐│
-│  │  Model: gemini-2.0-flash-exp                                ││
+│  │  Model: gemini-2.5-flash-native-audio-preview                ││
 │  │  API Version: v1alpha                                        ││
 │  │  Modalities: AUDIO (bidirectional)                          ││
-│  │  Voice: Kore (Turkish-optimized)                            ││
+│  │  Voice: Configurable (Kore/Puck/Aoede)                      ││
 │  └─────────────────────────────────────────────────────────────┘│
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -103,7 +103,7 @@ Gemini Response → Transcript Parser → Keyword Matcher → Callback
 | `useHaptic` | Native vibration patterns |
 | `useFallDetection` | Accelerometer-based fall detection |
 | `usePermissions` | Camera, mic, location permissions |
-| `useNativePlugins` | Capacitor plugin access |
+| `useNativePlugins` | Capacitor plugin access (optional) |
 
 ### Feature Modules
 
@@ -114,7 +114,7 @@ Gemini Response → Transcript Parser → Keyword Matcher → Callback
 | Color Detection | `features/color-detection/` | Active |
 | Expiration Reader | `features/expiration/` | Active |
 | SOS System | `features/sos/` | Active |
-| Gamification | `features/gamification/` | Planned |
+| Gamification | `features/gamification/` | Active |
 
 ## State Management
 

@@ -4,9 +4,9 @@
 
 **AI-Powered Real-Time Navigation Assistant for the Visually Impaired**
 
-*Built with Google Gemini 3 & Gemini Live API*
+*Built with Google Gemini 2.5 Flash & Gemini Live API*
 
-[![Gemini 3](https://img.shields.io/badge/AI-Gemini%203-blue.svg)](https://ai.google.dev/gemini-api/docs/gemini-3)
+[![Gemini 2.5 Flash](https://img.shields.io/badge/AI-Gemini%202.5%20Flash-blue.svg)](https://ai.google.dev/gemini-api/docs/models)
 [![Live API](https://img.shields.io/badge/API-Gemini%20Live-green.svg)](https://ai.google.dev/gemini-api/docs/live)
 [![Platform](https://img.shields.io/badge/platform-Web%20%7C%20Android%20%7C%20iOS-orange.svg)](package.json)
 
@@ -20,7 +20,7 @@ LiveSight is a **real-time AI navigation assistant** that empowers visually impa
 
 This is not just another chatbot. LiveSight is a **life-changing accessibility tool** that acts as "AI Eyes" - continuously analyzing the user's surroundings and proactively warning about dangers, describing environments, reading text, and providing voice-guided navigation.
 
-## Gemini 3 Integration
+## Gemini 2.5 Flash Integration
 
 LiveSight leverages the **Gemini API ecosystem** extensively:
 
@@ -36,6 +36,7 @@ LiveSight leverages the **Gemini API ecosystem** extensively:
 | **Multimodal Input** | Live camera frames (JPEG) + microphone audio streamed simultaneously |
 | **Native Audio Output** | Gemini generates natural speech responses directly |
 | **System Instructions** | Dynamic prompts for 6 different AI modes (Navigation, Traffic, Color, etc.) |
+| **Function Calling** | 4 tool declarations enabling AI-to-app structured actions (obstacles, mode switch, emergency, environment) |
 | **Real-time Processing** | 2-5 FPS video analysis for obstacle/vehicle/traffic light detection |
 | **Voice Commands** | Natural language command detection from user speech transcripts |
 | **Context Switching** | Seamless mode changes via `sendClientContent` without reconnection |

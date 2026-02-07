@@ -130,6 +130,7 @@ const EmergencyContactsModal: React.FC<EmergencyContactsModalProps> = memo(({
             <input
               type="text"
               placeholder="Name *"
+              aria-label="Contact name"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:border-cyan-500 outline-none"
@@ -138,6 +139,7 @@ const EmergencyContactsModal: React.FC<EmergencyContactsModalProps> = memo(({
             <input
               type="tel"
               placeholder="Phone Number *"
+              aria-label="Phone number"
               value={formData.phone}
               onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
               className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:border-cyan-500 outline-none"
@@ -146,6 +148,7 @@ const EmergencyContactsModal: React.FC<EmergencyContactsModalProps> = memo(({
             <input
               type="email"
               placeholder="Email (optional)"
+              aria-label="Email address"
               value={formData.email}
               onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
               className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:border-cyan-500 outline-none"
@@ -153,6 +156,7 @@ const EmergencyContactsModal: React.FC<EmergencyContactsModalProps> = memo(({
 
             <select
               value={formData.relationship}
+              aria-label="Relationship"
               onChange={(e) => setFormData(prev => ({ ...prev, relationship: e.target.value }))}
               className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-cyan-500 outline-none"
             >

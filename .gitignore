@@ -52,3 +52,11 @@ coverage/
 *.ntvs*
 *.njsproj
 *.sln
+
+# Debug logs
+livesight_logs.txt
+*.txt
+!README.txt
+
+# Junk files
+nul

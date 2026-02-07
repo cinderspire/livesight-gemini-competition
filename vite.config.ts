@@ -39,7 +39,7 @@ export default defineConfig(({ mode }) => {
     // Build configuration
     build: {
       outDir: 'dist',
-      sourcemap: true,
+      sourcemap: false,
       minify: 'esbuild',
       target: 'es2022',
       rollupOptions: {

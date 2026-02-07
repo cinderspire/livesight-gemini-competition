@@ -87,7 +87,7 @@ export function LiveSightProvider({ children }: LiveSightProviderProps): React.J
    */
   const addLog = useCallback((description: string, riskLevel: RiskLevel, category?: ObstacleCategory) => {
     const newLog: HazardLog = {
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       timestamp: Date.now(),
       description,
       riskLevel,

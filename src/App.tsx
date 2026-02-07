@@ -734,8 +734,8 @@ const LiveSightApp: React.FC = () => {
       <CommandHelp isOpen={showHelp} onClose={() => setShowHelp(false)} />
       <EmergencyContactsModal isOpen={showEmergencyContacts} onClose={() => setShowEmergencyContacts(false)} />
 
-      {/* Test Panel */}
-      {showTestPanel && (
+      {/* Test Panel (dev only) */}
+      {process.env.NODE_ENV === 'development' && showTestPanel && (
         <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6 animate-fade-in-up">
           <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 max-w-md w-full space-y-4">
             <div className="flex justify-between items-center mb-4">
@@ -807,15 +807,6 @@ const LiveSightApp: React.FC = () => {
           {/* Status Bar */}
           <StatusBar />
 
-          {/* Test Panel Button */}
-          <button
-            onClick={() => setShowTestPanel(true)}
-            className="w-8 h-8 rounded-full bg-gray-900/50 border border-yellow-600 flex items-center justify-center text-yellow-500 hover:text-yellow-400 hover:border-yellow-500 transition"
-            aria-label="Open test panel"
-          >
-            <span className="text-sm">🧪</span>
-          </button>
-
           {/* Emergency Contacts Button */}
           <button
             onClick={() => setShowEmergencyContacts(true)}
@@ -832,16 +823,6 @@ const LiveSightApp: React.FC = () => {
             aria-label="Show voice commands help"
           >
             <span className="text-xs font-bold">?</span>
-          </button>
-
-          {/* Test Panel Toggle Button (hidden on small screens) */}
-          <button
-            onClick={() => setShowTestPanel(!showTestPanel)}
-            className="hidden md:flex w-8 h-8 items-center justify-center rounded-full bg-gray-900/50 border border-yellow-600 text-yellow-500 hover:text-yellow-400 hover:border-yellow-500 transition"
-            aria-label="Toggle Test Panel"
-            aria-pressed={showTestPanel ? "true" : "false"}
-          >
-            🧪
           </button>
 
           {/* Settings Button */}

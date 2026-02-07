@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /**
  * LiveSight Global Styles
  * Core CSS that complements Tailwind

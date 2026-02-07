@@ -10,7 +10,6 @@ export { default as SystemToast } from './SystemToast';
 export { default as SettingsModal } from './SettingsModal';
 export { default as CommandHelp } from './CommandHelp';
 export { default as ErrorBoundary } from './ErrorBoundary';
-export { default as Loading } from './Loading';
 
 // Feature Components
 export { default as SOSButton } from './SOSButton';

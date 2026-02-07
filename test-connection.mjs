@@ -29,7 +29,7 @@ async function testConnection() {
     console.log('Test 1: Text Generation...');
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         contents: 'Say OK',
       });
       console.log('✅ Text Generation works! Response:', response.text);
@@ -46,11 +46,11 @@ async function testConnection() {
     console.log('\nTest 2: Live API Connection...');
     // Try different model names
     const models = [
-      'gemini-2.0-flash-exp',
-      'gemini-2.0-flash-live-001',
-      'gemini-live-2.5-flash-preview'
+      'gemini-2.5-flash-native-audio-preview-12-2025',
+      'gemini-2.5-flash-native-audio-preview',
+      'gemini-2.5-flash-exp'
     ];
-    const liveModel = models[0]; // Try gemini-2.0-flash-exp
+    const liveModel = models[0]; // Use the same model as the app
     console.log('Model:', liveModel);
 
     let connected = false;

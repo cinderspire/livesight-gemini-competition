@@ -6,7 +6,7 @@
 
 ---
 
-## Current Version: 1.2.0
+## Current Version: 2.0.0
 
 ### Completed Features ✅
 

@@ -299,8 +299,9 @@ const SettingsModal: React.FC<SettingsModalProps> = memo(({ isOpen, onClose }) =
                 {settings.quietHours.enabled && (
                   <div className="flex gap-4 pl-4">
                     <div className="flex-1">
-                      <label className="text-[10px] text-gray-500 uppercase block mb-1">Start</label>
+                      <label htmlFor="quiet-start" className="text-[10px] text-gray-500 uppercase block mb-1">Start</label>
                       <input
+                        id="quiet-start"
                         type="time"
                         value={settings.quietHours.start}
                         onChange={(e) => updateSettings({
@@ -310,8 +311,9 @@ const SettingsModal: React.FC<SettingsModalProps> = memo(({ isOpen, onClose }) =
                       />
                     </div>
                     <div className="flex-1">
-                      <label className="text-[10px] text-gray-500 uppercase block mb-1">End</label>
+                      <label htmlFor="quiet-end" className="text-[10px] text-gray-500 uppercase block mb-1">End</label>
                       <input
+                        id="quiet-end"
                         type="time"
                         value={settings.quietHours.end}
                         onChange={(e) => updateSettings({

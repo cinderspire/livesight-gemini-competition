@@ -28,7 +28,6 @@
   "dependencies": {
     "@capacitor/android": "^8.0.1",
     "@capacitor/camera": "^8.0.0",
-    "@capacitor/cli": "^7.4.5",
     "@capacitor/core": "^8.0.1",
     "@capacitor/geolocation": "^8.0.0",
     "@capacitor/haptics": "^8.0.0",
@@ -41,17 +40,21 @@
     "react-dom": "^19.2.3"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.4.5",
     "@types/node": "^22.14.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "autoprefixer": "^10.4.24",
     "eslint": "^9.0.0",
     "eslint-plugin-react": "^7.35.0",
     "eslint-plugin-react-hooks": "^5.0.0",
+    "postcss": "^8.5.6",
     "prettier": "^3.3.0",
     "sharp": "^0.34.5",
+    "tailwindcss": "^3.4.19",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   },

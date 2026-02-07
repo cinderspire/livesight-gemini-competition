@@ -4,7 +4,7 @@
 
 ### 1. Real-Time Scene Description
 
-**Technology**: Gemini 2.0 Flash Live API
+**Technology**: Gemini 2.5 Flash Live API
 
 The AI continuously analyzes camera frames and describes the environment:
 
@@ -159,15 +159,15 @@ shouldReconnect: true // Disabled on manual stop
 ## Planned Features
 
 ### Phase 2
-- [ ] Traffic light detection
-- [ ] Color description for clothing
-- [ ] Expiration date reader
+- [x] Traffic light detection
+- [x] Color description for clothing
+- [x] Expiration date reader
 - [ ] Offline mode with cached routes
 
 ### Phase 3
 - [ ] Community routes sharing
-- [ ] Gamification (badges, points)
-- [ ] Multi-language support
+- [x] Gamification (badges, points)
+- [x] Multi-language support
 - [ ] Helper network integration
 
 ---

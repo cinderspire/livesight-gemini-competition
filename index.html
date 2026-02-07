@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
     <meta name="description" content="LiveSight - A proactive navigation assistant for the visually impaired using AI" />
     <meta name="theme-color" content="#050505" />
 
@@ -14,9 +14,6 @@
 
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
-
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Inline critical styles -->
     <style>
@@ -165,16 +162,21 @@
         opacity: 0;
         pointer-events: none;
       }
+
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
     </style>
   </head>
   <body>
     <!-- Loading Screen (shown until React mounts) -->
     <div id="loading-screen" aria-live="polite">
-      <div class="relative w-16 h-16 mb-4">
-        <div class="absolute inset-0 border-2 border-gray-800 rounded-full"></div>
-        <div class="absolute inset-0 border-t-2 border-cyan-500 rounded-full animate-spin"></div>
+      <div style="position:relative;width:64px;height:64px;margin-bottom:16px">
+        <div style="position:absolute;inset:0;border:2px solid #1f2937;border-radius:50%"></div>
+        <div style="position:absolute;inset:0;border-top:2px solid #06b6d4;border-right:2px solid transparent;border-bottom:2px solid transparent;border-left:2px solid transparent;border-radius:50%;animation:spin 1s linear infinite"></div>
       </div>
-      <p class="font-mono text-xs text-cyan-500/80 uppercase tracking-widest">
+      <p style="font-family:'JetBrains Mono',monospace;font-size:12px;color:rgba(6,182,212,0.8);text-transform:uppercase;letter-spacing:0.1em">
         INITIALIZING LIVESIGHT...
       </p>
     </div>
@@ -185,15 +187,27 @@
     <!-- Script to hide loading screen when React mounts -->
     <script>
       // Hide loading screen when React app is ready
-      window.addEventListener('DOMContentLoaded', function() {
+      function hideLoading() {
         var loadingScreen = document.getElementById('loading-screen');
-        // Give React a moment to mount
-        setTimeout(function() {
-          if (loadingScreen) {
-            loadingScreen.classList.add('hidden');
-          }
-        }, 100);
+        if (loadingScreen) {
+          loadingScreen.classList.add('hidden');
+          setTimeout(function() { loadingScreen.remove(); }, 500);
+        }
+      }
+      // Wait for React root to have content
+      var observer = new MutationObserver(function(mutations) {
+        var root = document.getElementById('root');
+        if (root && root.children.length > 0) {
+          observer.disconnect();
+          hideLoading();
+        }
       });
+      var root = document.getElementById('root');
+      if (root) {
+        observer.observe(root, { childList: true });
+      }
+      // Fallback timeout
+      setTimeout(hideLoading, 5000);
     </script>
 
     <!-- Main Application Script -->

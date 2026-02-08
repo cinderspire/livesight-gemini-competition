@@ -60,3 +60,7 @@ livesight_logs.txt
 
 # Junk files
 nul
+
+# Screenshots
+livesight-main.png
+.playwright-mcp/

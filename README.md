@@ -281,7 +281,7 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 ### Built with ❤️ and AI
 
-**LiveSight** by [cinderspire](https://github.com/cinderspire)
+**LiveSight** by [cinderspire](https://github.com/cinderspire) · [playtools.top](https://playtools.top)
 
 *Empowering independence through intelligent vision*
 

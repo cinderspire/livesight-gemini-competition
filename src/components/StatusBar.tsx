@@ -10,9 +10,7 @@ const StatusBar: React.FC = memo(() => {
 
   // Battery icon based on level
   const getBatteryIcon = () => {
-    if (batteryLevel > 75) return '🔋';
     if (batteryLevel > 50) return '🔋';
-    if (batteryLevel > 25) return '🪫';
     return '🪫';
   };
 

@@ -193,9 +193,94 @@ src/
 └── utils/           # Audio utilities
 ```
 
+## Public Benefit & Open Source
+
+LiveSight is built **for the public good**. This project is completely free and open source — anyone can use, modify, and distribute it for any purpose. We believe AI-powered accessibility tools should be available to everyone, everywhere, without barriers.
+
+- **Free forever** — No subscription, no paywall, no ads
+- **Open source** — MIT License, use it however you want
+- **Community-driven** — Contributions, translations, and forks are welcome
+- **Non-commercial friendly** — NGOs, schools, and accessibility organizations can freely adopt and customize LiveSight
+
+> *"Technology should serve humanity. LiveSight exists to give independence back to those who need it most."*
+
+## Setup & Installation
+
+### Web (Quick Start)
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/cinderspire/livesight-gemini-competition.git
+cd livesight-gemini-competition
+
+# 2. Install dependencies
+npm install
+
+# 3. Create environment file
+echo GEMINI_API_KEY=your_api_key_here > .env.local
+
+# 4. Start development server
+npm run dev
+```
+
+Get your free Gemini API key at [Google AI Studio](https://aistudio.google.com/apikey).
+
+### Android (APK Build)
+
+```bash
+# 1. Build for production
+npm run build
+
+# 2. Sync with Capacitor
+npx cap sync android
+
+# 3. Open in Android Studio (or build from CLI)
+npx cap open android
+
+# CLI build (requires Android SDK):
+cd android && ./gradlew assembleDebug
+# APK output: android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+### Android (Install via ADB)
+
+```bash
+# USB
+adb install android/app/build/outputs/apk/debug/app-debug.apk
+
+# WiFi (pair first, then connect)
+adb pair <device-ip>:<pair-port>    # enter pairing code
+adb connect <device-ip>:<connect-port>
+adb install android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+### iOS
+
+```bash
+npm run build
+npx cap sync ios
+npx cap open ios
+# Build and run from Xcode
+```
+
+### Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `GEMINI_API_KEY` | Yes | Your Google Gemini API key |
+
+### System Requirements
+
+| Platform | Requirement |
+|----------|-------------|
+| **Web** | Modern browser with camera & microphone (Chrome, Edge, Firefox) |
+| **Android** | Android 7.0+ (API 24), Camera, Microphone, Location |
+| **iOS** | iOS 14+, Camera, Microphone, Location |
+| **Build** | Node.js 18+, npm 9+ |
+
 ## License
 
-MIT License
+MIT License — See [LICENSE](LICENSE) for details.
 
 ---
 

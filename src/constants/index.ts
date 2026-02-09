@@ -19,12 +19,12 @@ export const AUDIO_CONFIG = {
 // ============================================
 
 export const VIDEO_CONFIG = {
-  FPS: 4,              // Increased for better perception
-  WIDTH: 800,          // Higher resolution
-  HEIGHT: 450,         // Higher resolution
-  JPEG_QUALITY: 0.7,   // Better quality
-  CAMERA_WIDTH: 1280,
-  CAMERA_HEIGHT: 720,
+  FPS: 4,
+  WIDTH: 512,
+  HEIGHT: 288,
+  JPEG_QUALITY: 0.5,
+  CAMERA_WIDTH: 640,
+  CAMERA_HEIGHT: 480,
   CAMERA_FPS: 30,
 } as const;
 

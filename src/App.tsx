@@ -64,7 +64,6 @@ const LiveSightApp: React.FC = () => {
   const [toastType, setToastType] = useState<'info' | 'success' | 'warning' | 'error' | 'achievement'>('info');
   const [apiKey, setApiKey] = useState<string>('');
   const [manualKeyInput, setManualKeyInput] = useState('');
-  const [showTestPanel, setShowTestPanel] = useState(false);
   const sessionStartRef = useRef<number>(0);
 
   // Refs
@@ -224,25 +223,6 @@ const LiveSightApp: React.FC = () => {
         break;
     }
   }, [vehicleCritical, vehicleWarning, vehicleAwareness, addLog, showToast]);
-
-  // Test functions for vehicle danger
-  const testVehicleCritical = useCallback(() => {
-    handleVehicleDanger('critical', 'TEST: STOP NOW! Car very close, 2 meters to your right!');
-  }, [handleVehicleDanger]);
-
-  const testVehicleWarning = useCallback(() => {
-    handleVehicleDanger('warning', 'TEST: WARNING! Bus approaching, 5 meters to your left');
-  }, [handleVehicleDanger]);
-
-  const testVehicleAwareness = useCallback(() => {
-    handleVehicleDanger('awareness', 'TEST: Bicycle detected, 3 o\'clock direction, 10 meters');
-  }, [handleVehicleDanger]);
-
-  const testFallDetection = useCallback(() => {
-    fallHaptic();
-    addLog('TEST: FALL DETECTED', 'critical');
-    showToast('TEST: Fall detected!', 'warning');
-  }, [fallHaptic, addLog, showToast]);
 
   // Handle Fall Detection
   const handleFallDetected = useCallback(() => {
@@ -457,22 +437,22 @@ const LiveSightApp: React.FC = () => {
 
     const keyToUse = apiKey || process.env.API_KEY;
     if (!keyToUse) {
-
+      setTranscript('No API key found. Please enter your Gemini API key.');
       return;
     }
 
     // Request permissions if not granted
     if (!permissions.allGranted) {
-
       const granted = await requestPermissions();
       if (!granted) {
-
+        setTranscript('Camera & microphone permissions required. Please allow access and restart.');
+        setStatus('error');
         return;
       }
     }
 
     if (!videoElementRef.current) {
-
+      setTranscript('Waiting for camera...');
       return;
     }
 
@@ -604,17 +584,27 @@ const LiveSightApp: React.FC = () => {
     }
   }, [isLive, startLiveSight, stopLiveSight]);
 
-  // Handle video ready - auto-start LiveSight when video is ready
+  // Stable ref for startLiveSight to avoid re-render loops
+  const startLiveSightRef = useRef(startLiveSight);
+  startLiveSightRef.current = startLiveSight;
+
+  // Handle video ready - just store the ref
   const handleVideoReady = useCallback((el: HTMLVideoElement) => {
     videoElementRef.current = el;
-    // Auto-start ONCE when video is ready and we have an API key
-    const keyToUse = apiKey || process.env.API_KEY;
-    if (keyToUse && !isLive && !hasAutoStartedRef.current && !isStartingRef.current) {
-      hasAutoStartedRef.current = true;
+  }, []);
 
-      startLiveSight();
+  // Auto-start when ALL conditions are met: permissions + video + api key
+  useEffect(() => {
+    const keyToUse = apiKey || process.env.API_KEY;
+    if (permissions.allGranted && keyToUse && videoElementRef.current && !isLive && !hasAutoStartedRef.current && !isStartingRef.current) {
+      hasAutoStartedRef.current = true;
+      // Small delay to let camera stream stabilize
+      const timer = setTimeout(() => {
+        startLiveSightRef.current();
+      }, 500);
+      return () => clearTimeout(timer);
     }
-  }, [apiKey, isLive, startLiveSight]);
+  }, [permissions.allGranted, apiKey, isLive]);
 
   // Clear toast
   const clearToast = useCallback(() => {
@@ -733,63 +723,6 @@ const LiveSightApp: React.FC = () => {
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
       <CommandHelp isOpen={showHelp} onClose={() => setShowHelp(false)} />
       <EmergencyContactsModal isOpen={showEmergencyContacts} onClose={() => setShowEmergencyContacts(false)} />
-
-      {/* Test Panel (dev only) */}
-      {process.env.NODE_ENV === 'development' && showTestPanel && (
-        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6 animate-fade-in-up">
-          <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 max-w-md w-full space-y-4">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-cyan-400 font-mono font-bold tracking-wider">TEST PANEL</h2>
-              <button
-                onClick={() => setShowTestPanel(false)}
-                className="text-gray-400 hover:text-white text-xl"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              <p className="text-xs text-gray-500 font-mono">VEHICLE DANGER TEST</p>
-
-              <button
-                onClick={testVehicleCritical}
-                className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2"
-              >
-                CRITICAL - Vehicle Too Close!
-              </button>
-
-              <button
-                onClick={testVehicleWarning}
-                className="w-full py-3 bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl transition flex items-center justify-center gap-2"
-              >
-                WARNING - Vehicle Approaching
-              </button>
-
-              <button
-                onClick={testVehicleAwareness}
-                className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2"
-              >
-                AWARENESS - Vehicle Detected
-              </button>
-            </div>
-
-            <div className="pt-4 border-t border-gray-700 space-y-3">
-              <p className="text-xs text-gray-500 font-mono">OTHER TESTS</p>
-
-              <button
-                onClick={testFallDetection}
-                className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2"
-              >
-                Fall Detection Test
-              </button>
-            </div>
-
-            <p className="text-[10px] text-gray-600 text-center mt-4">
-              Each button triggers the corresponding haptic feedback
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* 1. TOP BAR (Status & Settings) */}
       <header className="px-4 py-3 flex justify-between items-center bg-gradient-to-b from-black/80 to-transparent z-40">

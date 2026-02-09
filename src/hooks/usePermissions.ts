@@ -11,10 +11,6 @@ export interface PermissionStatus {
   checking: boolean;
 }
 
-/**
- * Permission Management Hook
- * Handles native permission requests for Capacitor apps
- */
 export function usePermissions() {
   const [permissions, setPermissions] = useState<PermissionStatus>({
     camera: false,
@@ -26,42 +22,27 @@ export function usePermissions() {
 
   const isNative = Capacitor.isNativePlatform();
 
-  // Check current permissions
   const checkPermissions = useCallback(async () => {
     setPermissions(prev => ({ ...prev, checking: true }));
-
     try {
       if (isNative) {
-        // Check camera permission (wrap in try/catch to handle errors gracefully)
         let cameraGranted = false;
         try {
-          const cameraStatus = await Camera.checkPermissions();
-          cameraGranted = cameraStatus.camera === 'granted';
-        } catch (e) {
-          console.warn('[Permissions] Camera check failed:', e);
-          cameraGranted = false;
-        }
+          const s = await Camera.checkPermissions();
+          cameraGranted = s.camera === 'granted';
+        } catch { /* ignore */ }
 
-        // Check location permission (wrap in try/catch - location services might be disabled)
-        let locationGranted = false;
-        try {
-          const locationStatus = await Geolocation.checkPermissions();
-          locationGranted = locationStatus.location === 'granted';
-        } catch (e) {
-          // Location services might be disabled - this is OK, just mark as not granted
-          console.warn('[Permissions] Geolocation check failed (services may be disabled):', e);
-          locationGranted = false;
-        }
-
-        // For microphone, we check via browser API since Capacitor doesn't have direct microphone plugin
         let microphoneGranted = false;
         try {
-          const micStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
-          microphoneGranted = micStatus.state === 'granted';
-        } catch {
-          // Fallback: assume not granted
-          microphoneGranted = false;
-        }
+          const s = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+          microphoneGranted = s.state === 'granted';
+        } catch { /* ignore */ }
+
+        let locationGranted = false;
+        try {
+          const s = await Geolocation.checkPermissions();
+          locationGranted = s.location === 'granted';
+        } catch { /* ignore */ }
 
         setPermissions({
           camera: cameraGranted,
@@ -71,135 +52,77 @@ export function usePermissions() {
           checking: false,
         });
       } else {
-        // Web browser - check via Permissions API
         try {
-          const [cameraResult, micResult] = await Promise.all([
+          const [cam, mic] = await Promise.all([
             navigator.permissions.query({ name: 'camera' as PermissionName }),
             navigator.permissions.query({ name: 'microphone' as PermissionName }),
           ]);
-
-          const cameraGranted = cameraResult.state === 'granted';
-          const microphoneGranted = micResult.state === 'granted';
-
           setPermissions({
-            camera: cameraGranted,
-            microphone: microphoneGranted,
+            camera: cam.state === 'granted',
+            microphone: mic.state === 'granted',
             location: false,
-            allGranted: cameraGranted && microphoneGranted,
+            allGranted: cam.state === 'granted' && mic.state === 'granted',
             checking: false,
           });
         } catch {
-          // Browser doesn't support permissions API, assume not granted
-          setPermissions({
-            camera: false,
-            microphone: false,
-            location: false,
-            allGranted: false,
-            checking: false,
-          });
+          setPermissions({ camera: false, microphone: false, location: false, allGranted: false, checking: false });
         }
       }
-    } catch (error) {
-      console.error('[Permissions] Check failed:', error);
-      setPermissions({
-        camera: false,
-        microphone: false,
-        location: false,
-        allGranted: false,
-        checking: false,
-      });
+    } catch {
+      setPermissions({ camera: false, microphone: false, location: false, allGranted: false, checking: false });
     }
   }, [isNative]);
 
-  // Request all permissions
   const requestPermissions = useCallback(async (): Promise<boolean> => {
     try {
       if (isNative) {
-        // Request camera permission via Capacitor
+        // Step 1: Request camera via Capacitor (triggers native Android dialog)
         let cameraGranted = false;
         try {
-          const cameraResult = await Camera.requestPermissions({ permissions: ['camera'] });
-          cameraGranted = cameraResult.camera === 'granted';
-        } catch (e) {
-          console.warn('[Permissions] Camera request failed:', e);
-          cameraGranted = false;
-        }
+          const r = await Camera.requestPermissions({ permissions: ['camera'] });
+          cameraGranted = r.camera === 'granted';
+        } catch { /* ignore */ }
 
-        // Request location permission via Capacitor (wrap in try/catch - location services might be disabled)
-        let locationGranted = false;
-        try {
-          const locationResult = await Geolocation.requestPermissions();
-          locationGranted = locationResult.location === 'granted';
-        } catch (e) {
-          console.warn('[Permissions] Geolocation request failed (services may be disabled):', e);
-          locationGranted = false;
-        }
-
-        // Request microphone via browser API (Capacitor doesn't have direct API)
+        // Step 2: Request microphone via getUserMedia (triggers native Android dialog)
         let microphoneGranted = false;
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          stream.getTracks().forEach(track => track.stop());
+          stream.getTracks().forEach(t => t.stop());
           microphoneGranted = true;
-        } catch {
-          microphoneGranted = false;
-        }
+        } catch { /* ignore */ }
 
-        setPermissions({
-          camera: cameraGranted,
-          microphone: microphoneGranted,
-          location: locationGranted,
-          allGranted: cameraGranted && microphoneGranted,
-          checking: false,
-        });
-
-        return cameraGranted && microphoneGranted;
-      } else {
-        // Web browser - request via getUserMedia
+        // Step 3: Request location via Capacitor (non-blocking, ok if denied)
+        let locationGranted = false;
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-            audio: true,
-          });
-          stream.getTracks().forEach(track => track.stop());
+          const r = await Geolocation.requestPermissions();
+          locationGranted = r.location === 'granted';
+        } catch { /* ignore */ }
 
-          setPermissions({
-            camera: true,
-            microphone: true,
-            location: false,
-            allGranted: true,
-            checking: false,
-          });
-
+        const allGranted = cameraGranted && microphoneGranted;
+        setPermissions({ camera: cameraGranted, microphone: microphoneGranted, location: locationGranted, allGranted, checking: false });
+        return allGranted;
+      } else {
+        // Web: single getUserMedia call triggers both camera + mic
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          stream.getTracks().forEach(t => t.stop());
+          setPermissions({ camera: true, microphone: true, location: false, allGranted: true, checking: false });
           return true;
         } catch {
-          setPermissions({
-            camera: false,
-            microphone: false,
-            location: false,
-            allGranted: false,
-            checking: false,
-          });
+          setPermissions({ camera: false, microphone: false, location: false, allGranted: false, checking: false });
           return false;
         }
       }
-    } catch (error) {
-      console.error('[Permissions] Request failed:', error);
+    } catch {
       return false;
     }
   }, [isNative]);
 
-  // Check permissions on mount
   useEffect(() => {
     checkPermissions();
   }, [checkPermissions]);
 
-  return {
-    permissions,
-    requestPermissions,
-    checkPermissions,
-    isNative,
-  };
+  return { permissions, requestPermissions, checkPermissions, isNative };
 }
 
 export default usePermissions;

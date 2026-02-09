@@ -64,3 +64,12 @@ nul
 # Screenshots
 livesight-main.png
 .playwright-mcp/
+
+# Android build outputs
+android/app/build/
+android/.gradle/
+android/local.properties
+
+# iOS build outputs
+ios/App/Pods/
+ios/DerivedData/

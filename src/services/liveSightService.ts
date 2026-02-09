@@ -534,18 +534,12 @@ GENERAL RULES:
   private startVideoStreaming(): void {
     if (this.videoInterval) clearInterval(this.videoInterval);
 
-    // Adaptive Frame Rate Strategy
     const getInterval = () => {
-      // High speed for critical safety features
-      if (this.activeFeature === 'traffic') return 200; // 5 FPS
-      if (this.activeFeature === 'navigation') return 250; // 4 FPS
-
-      // Standard speed for reading/analysis
-      if (this.activeFeature === 'expiration') return 500; // 2 FPS
-      if (this.activeFeature === 'color') return 1000; // 1 FPS
-
-      // Economy mode
-      return 333; // ~3 FPS
+      if (this.activeFeature === 'traffic') return 150;    // ~7 FPS
+      if (this.activeFeature === 'navigation') return 200;  // 5 FPS
+      if (this.activeFeature === 'expiration') return 300;  // ~3 FPS
+      if (this.activeFeature === 'color') return 500;       // 2 FPS
+      return 250; // 4 FPS
     };
 
     const interval = getInterval();

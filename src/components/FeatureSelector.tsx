@@ -51,13 +51,6 @@ const FEATURES: FeatureItem[] = [
     shortLabel: 'EXP',
     description: 'Explore and describe surroundings',
   },
-  {
-    id: 'community',
-    icon: '👥',
-    label: 'Community',
-    shortLabel: 'COM',
-    description: 'Shared routes and accessibility info',
-  },
 ];
 
 /**

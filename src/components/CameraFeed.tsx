@@ -25,13 +25,20 @@ const CameraFeed: React.FC<CameraFeedProps> = memo(({ onVideoReady, isActive, is
     setIsLoading(true);
     const video = videoRef.current;
     video.srcObject = null;
-    video.src = demoVideoUrl;
+    // Try absolute URL resolution for Capacitor
+    const resolvedUrl = new URL(demoVideoUrl, window.location.href).href;
+    console.log('[CameraFeed] Demo video URL:', demoVideoUrl, '→', resolvedUrl);
+    video.src = resolvedUrl;
     video.loop = true;
     video.muted = true;
     video.playsInline = true;
+    video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', '');
     video.onloadedmetadata = () => {
+      console.log('[CameraFeed] Video metadata loaded, dimensions:', video.videoWidth, 'x', video.videoHeight);
       video.play()
         .then(() => {
+          console.log('[CameraFeed] Video playing successfully');
           setIsLoading(false);
           onVideoReady(video);
         })
@@ -42,7 +49,8 @@ const CameraFeed: React.FC<CameraFeedProps> = memo(({ onVideoReady, isActive, is
         });
     };
     video.onerror = () => {
-      setError('Demo video load failed');
+      console.error('[CameraFeed] Demo video load error:', video.error?.code, video.error?.message);
+      setError('Video error ' + video.error?.code + ': ' + resolvedUrl);
       setIsLoading(false);
     };
   }, [demoVideoUrl, onVideoReady]);

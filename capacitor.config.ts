@@ -39,6 +39,7 @@ const config: CapacitorConfig = {
     backgroundColor: '#000000',
     contentInset: 'always',
     preferredContentMode: 'mobile',
+    allowsLinkPreview: false,
   },
 };
 

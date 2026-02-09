@@ -73,3 +73,6 @@ android/local.properties
 # iOS build outputs
 ios/App/Pods/
 ios/DerivedData/
+
+# Raw demo source videos
+public/demo/raw*.mp4

@@ -63,7 +63,7 @@ const LiveSightApp: React.FC = () => {
 
   // Demo mode: ?demo=video_name.mp4 in URL or localStorage 'livesight_demo'
   // DEMO_MODE: Set to a video filename to enable, undefined to disable
-  const DEMO_MODE = 'traffic.mp4'; // Set to null for production
+  const DEMO_MODE: string | null = null; // Set to null for production
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [demoVideoUrl, _setDemoVideoUrl] = useState<string | undefined>(() => {
     if (DEMO_MODE) return `/demo/${DEMO_MODE}`;
@@ -587,79 +587,91 @@ const LiveSightApp: React.FC = () => {
     }
   }, [permissions.allGranted, apiKey, isLive]);
 
-  // Demo mode: full scenario with reactions, overlays, mode switches
+  // Demo mode: full scenario with reactions, overlays, mode switches + VOICE
   useEffect(() => {
     if (demoVideoUrl && !isLive) {
       setIsLive(true);
       setStatus('connected');
       setTranscript('Scanning environment...');
 
-      const timeline: Array<{ t: number; fn: () => void }> = [
-        // 0-3s: Navigation mode - scanning
-        { t: 500, fn: () => {
-          setTranscript('Clear path ahead. Sidewalk detected.');
-          addLog('Environment scan: Clear path', 'low');
-        }},
-        // 3s: Obstacle warning
-        { t: 3000, fn: () => {
-          setTranscript('⚠️ Caution: Pole at 2 o\'clock, 3 meters.');
-          addLog('Obstacle: Pole at 2 o\'clock, 3m', 'high');
-          showToast('⚠️ Obstacle detected ahead', 'warning');
-        }},
-        // 6s: Switch to Traffic mode
-        { t: 6000, fn: () => {
-          setActiveFeature('traffic');
-          setTranscript('Switching to Traffic Light mode...');
-          showToast('Traffic Light Mode: ON', 'success');
-        }},
-        // 8s: RED light detected
-        { t: 8000, fn: () => {
-          setLastTrafficDetection({ state: 'red' as const, confidence: 0.95, pedestrianSignal: true, direction: 12 as const });
-          setTranscript('🔴 Traffic light is RED. Please wait.');
-          addLog('Traffic Light: RED - STOP', 'high');
-          showToast('STOP — Red Light', 'error');
-        }},
-        // 13s: YELLOW light
-        { t: 13000, fn: () => {
-          setLastTrafficDetection({ state: 'yellow' as const, confidence: 0.9, pedestrianSignal: true, direction: 12 as const });
-          setTranscript('🟡 Light changing... Get ready.');
-          addLog('Traffic Light: YELLOW', 'medium');
-          showToast('WAIT — Light Changing', 'warning');
-        }},
-        // 16s: GREEN light
-        { t: 16000, fn: () => {
-          setLastTrafficDetection({ state: 'green' as const, confidence: 0.97, pedestrianSignal: true, direction: 12 as const });
-          setTranscript('🟢 GREEN light! Safe to cross now.');
-          addLog('Traffic Light: GREEN - GO', 'low');
-          showToast('GO — Green Light ✓', 'success');
-        }},
-        // 20s: Switch to Navigation, crossing
-        { t: 20000, fn: () => {
-          setActiveFeature('navigation');
-          setLastTrafficDetection(null);
-          setTranscript('Crossing pedestrian walkway. Stay centered.');
-          showToast('Navigation Mode: ON', 'info');
-        }},
-        // 23s: Vehicle danger
-        { t: 23000, fn: () => {
-          setTranscript('🚗 WARNING: Vehicle approaching from the right!');
-          addLog('VEHICLE DANGER: Car approaching from right', 'critical');
-          showToast('⚠️ VEHICLE — Look Right!', 'error');
-        }},
-        // 26s: All clear
-        { t: 26000, fn: () => {
-          setTranscript('Vehicle passed. Path is clear. Continue walking.');
-          addLog('All clear - safe to proceed', 'low');
-          showToast('Path Clear ✓', 'success');
-        }},
-        // 29s: Summary
-        { t: 29000, fn: () => {
-          setTranscript('You\'ve arrived safely. LiveSight is always watching.');
-        }},
-      ];
+      // TTS helper
+      const speak = (text: string, rate = 1.0) => {
+        try {
+          window.speechSynthesis.cancel();
+          const u = new SpeechSynthesisUtterance(text);
+          u.lang = 'en-US';
+          u.rate = rate;
+          u.pitch = 1.0;
+          u.volume = 1.0;
+          // Try to pick a good voice
+          const voices = window.speechSynthesis.getVoices();
+          const preferred = voices.find(v => v.name.includes('Samantha') || v.name.includes('Karen') || v.name.includes('Daniel'));
+          if (preferred) u.voice = preferred;
+          window.speechSynthesis.speak(u);
+        } catch (e) {
+          console.warn('[Demo] TTS failed:', e);
+        }
+      };
+
+      // Preload voices
+      window.speechSynthesis.getVoices();
+
+      // Select scenario based on demo video filename
+      const scenario = DEMO_MODE || '';
+      let timeline: Array<{ t: number; fn: () => void }> = [];
+
+      if (scenario.includes('demo1')) {
+        // DEMO 1: NYC Greenwich Village — Sidewalk with parked cars, trees, stop sign
+        timeline = [
+          { t: 500, fn: () => { setTranscript('Scanning sidewalk ahead...'); speak('Scanning sidewalk ahead.'); }},
+          { t: 3500, fn: () => { setTranscript('🚗 Parked minivan on your right. Stay left.'); addLog('Parked vehicle: minivan right side', 'medium'); showToast('🚗 Vehicle Right', 'warning'); speak('Parked minivan on your right. Stay on the left side of the sidewalk.'); }},
+          { t: 7000, fn: () => { setTranscript('🌳 Tree pit ahead. Narrow path. Watch your step.'); addLog('Obstacle: Tree pit narrows path', 'high'); showToast('⚠️ Narrow Path', 'warning'); speak('Tree pit ahead. The path narrows here. Watch your step.', 1.1); }},
+          { t: 11000, fn: () => { setTranscript('🛑 Stop sign at the corner. Intersection ahead.'); addLog('Stop sign detected', 'medium'); showToast('🛑 Stop Sign', 'info'); speak('Stop sign at the corner. Check for traffic before crossing.'); }},
+        ];
+      } else if (scenario.includes('demo2')) {
+        // DEMO 2: Banff pedestrian crossing — traffic light, bus, tourists crossing
+        timeline = [
+          { t: 500, fn: () => { setActiveFeature('traffic'); setTranscript('🚦 Crosswalk detected ahead...'); showToast('Traffic Mode', 'success'); speak('Crosswalk detected ahead. Checking pedestrian signal.'); }},
+          { t: 4000, fn: () => { setLastTrafficDetection({ state: 'green' as const, confidence: 0.96, pedestrianSignal: true, direction: 12 as const }); setTranscript('🟢 Walk signal is ON. Safe to cross.'); addLog('Pedestrian signal: WALK', 'low'); showToast('✅ WALK', 'success'); speak('Walk signal is on. Safe to cross. Other pedestrians are crossing too.'); }},
+          { t: 8500, fn: () => { setTranscript('🚌 Bus stopped on the right. Stay in the crosswalk.'); addLog('Transit bus detected right side', 'medium'); showToast('🚌 Bus — Right', 'info'); speak('Transit bus stopped on your right. Stay in the crosswalk lines.'); }},
+          { t: 12000, fn: () => { setActiveFeature('navigation'); setLastTrafficDetection(null); setTranscript('✅ Crossed safely. Sidewalk reached.'); showToast('✅ Safe', 'success'); speak('You have crossed safely. Sidewalk reached.'); }},
+        ];
+      } else if (scenario.includes('demo3')) {
+        // DEMO 3: Tokyo Shibuya — karaoke signs, busy crossing, narrow street
+        timeline = [
+          { t: 500, fn: () => { setTranscript('📍 Entering busy pedestrian area...'); speak('Entering busy pedestrian area. Multiple people detected.'); }},
+          { t: 4000, fn: () => { setTranscript('🚶 Crowded crosswalk. 5 people ahead.'); addLog('Crowd detected: 5+ pedestrians', 'medium'); showToast('🚶 Crowded Area', 'warning'); speak('Crowded crosswalk ahead. At least 5 people walking toward you. Stay right.'); }},
+          { t: 8000, fn: () => { setTranscript('⬆️ Entering narrow shopping street.'); addLog('Narrow street ahead', 'medium'); showToast('↑ Narrow Street', 'info'); speak('Entering narrow shopping street. Buildings on both sides. Walk slowly.'); }},
+          { t: 12000, fn: () => { setTranscript('✅ Path is clearing. Continue ahead.'); showToast('✅ Clear', 'success'); speak('Path is clearing up. Continue straight ahead.'); }},
+        ];
+      } else if (scenario.includes('demo4')) {
+        // DEMO 4: Tree-lined street — narrow sidewalk, parked van, low visibility
+        timeline = [
+          { t: 500, fn: () => { setTranscript('⬆️ Walking on tree-lined street...'); speak('Walking on tree-lined street.'); }},
+          { t: 3500, fn: () => { setTranscript('⚠️ Narrow sidewalk! Parked van blocking path.'); addLog('Obstacle: Parked van narrows sidewalk', 'high'); showToast('⚠️ Narrow!', 'warning'); speak('Caution! Narrow sidewalk ahead. A parked van is blocking part of the path. Move carefully.', 1.1); }},
+          { t: 7500, fn: () => { setTranscript('🚗 Parked car at the crosswalk. Check before stepping.'); addLog('Vehicle at crosswalk', 'high'); showToast('🚗 Car Ahead', 'warning'); speak('Parked car at the crosswalk. Stop and check for traffic before stepping onto the road.'); }},
+          { t: 11000, fn: () => { setTranscript('✅ Crossed safely. Wide sidewalk ahead.'); addLog('Path clear', 'low'); showToast('✅ Clear Path', 'success'); speak('Crossed safely. Wide sidewalk ahead. Continue walking.'); }},
+        ];
+      } else if (scenario.includes('demo5')) {
+        // DEMO 5: Tokyo Shibuya Center-gai — McDonald's, shops, busy pedestrian zone
+        timeline = [
+          { t: 500, fn: () => { setActiveFeature('explore'); setTranscript('🔍 Explore mode. Scanning nearby places...'); showToast('🔍 Explore', 'success'); speak('Explore mode activated. Scanning nearby places.'); }},
+          { t: 4000, fn: () => { setTranscript('🍔 McDonald\'s on your left. Entrance 3 meters.'); addLog('Nearby: McDonald\'s 3m left', 'low'); showToast('🍔 McDonald\'s — Left', 'info'); speak('McDonald\'s restaurant on your left. Entrance is 3 meters ahead.'); }},
+          { t: 8000, fn: () => { setTranscript('🚶 Busy pedestrian zone. 8 people nearby.'); addLog('Crowd: 8+ people detected', 'medium'); showToast('🚶 Crowded', 'warning'); speak('Busy pedestrian zone. At least 8 people around you. Walk carefully.'); }},
+          { t: 12000, fn: () => { setActiveFeature('navigation'); setTranscript('🎤 Karaoke venue on your right. Shopping street ahead.'); showToast('🎤 Karaoke — Right', 'info'); speak('Karaoke venue on your right. Shopping street continues ahead.'); }},
+        ];
+      } else {
+        // Default fallback
+        timeline = [
+          { t: 500, fn: () => { setTranscript('LiveSight is ready.'); speak('LiveSight is ready. Point your camera ahead.'); }},
+        ];
+      }
 
       const timers = timeline.map(({ t, fn }) => setTimeout(fn, t));
-      return () => timers.forEach(clearTimeout);
+      return () => {
+        timers.forEach(clearTimeout);
+        window.speechSynthesis.cancel();
+      };
     }
   }, [demoVideoUrl]);
 

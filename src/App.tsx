@@ -61,6 +61,22 @@ const LiveSightApp: React.FC = () => {
   const [apiKey, setApiKey] = useState<string>('');
   const [manualKeyInput, setManualKeyInput] = useState('');
 
+  // Demo mode: ?demo=video_name.mp4 in URL or localStorage 'livesight_demo'
+  // DEMO_MODE: Set to a video filename to enable, undefined to disable
+  const DEMO_MODE = 'traffic.mp4'; // Set to null for production
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [demoVideoUrl, _setDemoVideoUrl] = useState<string | undefined>(() => {
+    if (DEMO_MODE) return `/demo/${DEMO_MODE}`;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const demoParam = params.get('demo');
+      if (demoParam) return `/demo/${demoParam}`;
+      const stored = localStorage.getItem('livesight_demo');
+      if (stored) return `/demo/${stored}`;
+    } catch {}
+    return undefined;
+  });
+
   // Refs
   const videoElementRef = useRef<HTMLVideoElement | null>(null);
   const serviceRef = useRef<LiveSightService | null>(null);
@@ -571,6 +587,82 @@ const LiveSightApp: React.FC = () => {
     }
   }, [permissions.allGranted, apiKey, isLive]);
 
+  // Demo mode: full scenario with reactions, overlays, mode switches
+  useEffect(() => {
+    if (demoVideoUrl && !isLive) {
+      setIsLive(true);
+      setStatus('connected');
+      setTranscript('Scanning environment...');
+
+      const timeline: Array<{ t: number; fn: () => void }> = [
+        // 0-3s: Navigation mode - scanning
+        { t: 500, fn: () => {
+          setTranscript('Clear path ahead. Sidewalk detected.');
+          addLog('Environment scan: Clear path', 'low');
+        }},
+        // 3s: Obstacle warning
+        { t: 3000, fn: () => {
+          setTranscript('⚠️ Caution: Pole at 2 o\'clock, 3 meters.');
+          addLog('Obstacle: Pole at 2 o\'clock, 3m', 'high');
+          showToast('⚠️ Obstacle detected ahead', 'warning');
+        }},
+        // 6s: Switch to Traffic mode
+        { t: 6000, fn: () => {
+          setActiveFeature('traffic');
+          setTranscript('Switching to Traffic Light mode...');
+          showToast('Traffic Light Mode: ON', 'success');
+        }},
+        // 8s: RED light detected
+        { t: 8000, fn: () => {
+          setLastTrafficDetection({ state: 'red' as const, confidence: 0.95, pedestrianSignal: true, direction: 12 as const });
+          setTranscript('🔴 Traffic light is RED. Please wait.');
+          addLog('Traffic Light: RED - STOP', 'high');
+          showToast('STOP — Red Light', 'error');
+        }},
+        // 13s: YELLOW light
+        { t: 13000, fn: () => {
+          setLastTrafficDetection({ state: 'yellow' as const, confidence: 0.9, pedestrianSignal: true, direction: 12 as const });
+          setTranscript('🟡 Light changing... Get ready.');
+          addLog('Traffic Light: YELLOW', 'medium');
+          showToast('WAIT — Light Changing', 'warning');
+        }},
+        // 16s: GREEN light
+        { t: 16000, fn: () => {
+          setLastTrafficDetection({ state: 'green' as const, confidence: 0.97, pedestrianSignal: true, direction: 12 as const });
+          setTranscript('🟢 GREEN light! Safe to cross now.');
+          addLog('Traffic Light: GREEN - GO', 'low');
+          showToast('GO — Green Light ✓', 'success');
+        }},
+        // 20s: Switch to Navigation, crossing
+        { t: 20000, fn: () => {
+          setActiveFeature('navigation');
+          setLastTrafficDetection(null);
+          setTranscript('Crossing pedestrian walkway. Stay centered.');
+          showToast('Navigation Mode: ON', 'info');
+        }},
+        // 23s: Vehicle danger
+        { t: 23000, fn: () => {
+          setTranscript('🚗 WARNING: Vehicle approaching from the right!');
+          addLog('VEHICLE DANGER: Car approaching from right', 'critical');
+          showToast('⚠️ VEHICLE — Look Right!', 'error');
+        }},
+        // 26s: All clear
+        { t: 26000, fn: () => {
+          setTranscript('Vehicle passed. Path is clear. Continue walking.');
+          addLog('All clear - safe to proceed', 'low');
+          showToast('Path Clear ✓', 'success');
+        }},
+        // 29s: Summary
+        { t: 29000, fn: () => {
+          setTranscript('You\'ve arrived safely. LiveSight is always watching.');
+        }},
+      ];
+
+      const timers = timeline.map(({ t, fn }) => setTimeout(fn, t));
+      return () => timers.forEach(clearTimeout);
+    }
+  }, [demoVideoUrl]);
+
   // Clear toast
   const clearToast = useCallback(() => {
     setToastMessage(null);
@@ -595,8 +687,8 @@ const LiveSightApp: React.FC = () => {
     return 'bg-cyan-400 text-cyan-400';
   }, [isLive, status]);
 
-  // --- API ENTRY UI ---
-  if (!process.env.API_KEY && !apiKey) {
+  // --- API ENTRY UI (skip in demo mode) ---
+  if (!process.env.API_KEY && !apiKey && !demoVideoUrl) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-[#09090b] text-white p-6 relative overflow-hidden">
         {/* Background gradients */}
@@ -772,6 +864,7 @@ const LiveSightApp: React.FC = () => {
             isScanning={isLive}
             onVideoReady={handleVideoReady}
             activeFeature={activeFeature}
+            demoVideoUrl={demoVideoUrl}
           />
 
           {/* OVERLAY: Transcript & Visualizer */}

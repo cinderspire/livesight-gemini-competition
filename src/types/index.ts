@@ -441,6 +441,7 @@ export interface CameraFeedProps {
   isScanning: boolean;
   activeFeature?: ActiveFeature;
   overlayMode?: 'default' | 'expiration' | 'color' | 'traffic' | 'obstacle';
+  demoVideoUrl?: string;
 }
 
 export interface SettingsModalProps {

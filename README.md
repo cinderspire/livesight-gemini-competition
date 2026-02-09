@@ -316,12 +316,22 @@ npx cap open ios
 
 LiveSight is built **for the public good**. This project is completely free and open source - anyone can use, modify, and distribute it for any purpose. We believe AI-powered accessibility tools should be available to everyone, everywhere, without barriers.
 
-- **Free forever** - No subscription, no paywall, no ads
-- **Open source** - MIT License, use it however you want
-- **Community-driven** - Contributions, translations, and forks are welcome
-- **Non-commercial friendly** - NGOs, schools, and accessibility organizations can freely adopt and customize LiveSight
+### **💯 100% Free - No Strings Attached**
 
-> *"Technology should serve humanity. LiveSight exists to give independence back to those who need it most."*
+**We claim NO rights, NO ownership, NO royalties on this project.**
+
+- ✅ **Completely FREE** - No subscription, no paywall, no ads, no hidden costs
+- ✅ **MIT License** - Use it however you want, commercially or non-commercially
+- ✅ **No Attribution Required** - You don't even need to credit us (though it's appreciated!)
+- ✅ **No Contributor Agreement** - Your contributions belong to you
+- ✅ **No Patents** - We will never patent any part of this technology
+- ✅ **No Profit Motive** - Built purely to help people, not to make money
+- ✅ **Community-Driven** - Contributions, translations, and forks are encouraged
+- ✅ **Public Domain Spirit** - If we could legally place it in public domain, we would
+
+**This is a gift to humanity.** Use it to help people. Improve lives. Make the world more accessible. That's all we ask.
+
+> *"Technology should serve humanity. LiveSight exists to give independence back to those who need it most. We claim no ownership — this belongs to everyone who needs it."*
 
 ## License
 

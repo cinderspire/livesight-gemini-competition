@@ -7,7 +7,7 @@ import { VIDEO_CONFIG } from '../constants';
  * Camera Feed Component
  * Displays video feed with HUD overlays
  */
-const CameraFeed: React.FC<CameraFeedProps> = memo(({ onVideoReady, isActive, isScanning }) => {
+const CameraFeed: React.FC<CameraFeedProps> = memo(({ onVideoReady, isActive, isScanning, demoVideoUrl }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -19,7 +19,41 @@ const CameraFeed: React.FC<CameraFeedProps> = memo(({ onVideoReady, isActive, is
     lastExpirationDetection
   } = useLiveSight();
 
+  const startDemoVideo = useCallback(() => {
+    if (!videoRef.current || !demoVideoUrl) return;
+    setError(null);
+    setIsLoading(true);
+    const video = videoRef.current;
+    video.srcObject = null;
+    video.src = demoVideoUrl;
+    video.loop = true;
+    video.muted = true;
+    video.playsInline = true;
+    video.onloadedmetadata = () => {
+      video.play()
+        .then(() => {
+          setIsLoading(false);
+          onVideoReady(video);
+        })
+        .catch(e => {
+          console.error('[CameraFeed] Demo video play error:', e);
+          setError('Demo video playback failed');
+          setIsLoading(false);
+        });
+    };
+    video.onerror = () => {
+      setError('Demo video load failed');
+      setIsLoading(false);
+    };
+  }, [demoVideoUrl, onVideoReady]);
+
   const startCamera = useCallback(async () => {
+    // If demo mode, use video file instead of camera
+    if (demoVideoUrl) {
+      startDemoVideo();
+      return;
+    }
+
     try {
       setError(null);
       setIsLoading(true);
@@ -56,7 +90,7 @@ const CameraFeed: React.FC<CameraFeedProps> = memo(({ onVideoReady, isActive, is
       setError('Camera Access Denied');
       setIsLoading(false);
     }
-  }, [onVideoReady]);
+  }, [onVideoReady, demoVideoUrl, startDemoVideo]);
 
   const stopCamera = useCallback(() => {
     if (videoRef.current?.srcObject) {
@@ -64,7 +98,11 @@ const CameraFeed: React.FC<CameraFeedProps> = memo(({ onVideoReady, isActive, is
       tracks.forEach(t => t.stop());
       videoRef.current.srcObject = null;
     }
-  }, []);
+    if (videoRef.current?.src && demoVideoUrl) {
+      videoRef.current.pause();
+      videoRef.current.src = '';
+    }
+  }, [demoVideoUrl]);
 
   useEffect(() => {
     if (isActive) {

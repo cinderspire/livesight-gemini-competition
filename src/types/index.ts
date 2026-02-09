@@ -406,8 +406,6 @@ export interface LiveSightContextType {
   setIsMicMuted: (m: boolean) => void;
 
   // New state
-  userStats: UserStats;
-  updateStats: (stats: Partial<UserStats>) => void;
   emergencyContacts: EmergencyContact[];
   setEmergencyContacts: (contacts: EmergencyContact[]) => void;
   isOffline: boolean;

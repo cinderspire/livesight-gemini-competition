@@ -338,7 +338,7 @@ const SettingsModal: React.FC<SettingsModalProps> = memo(({ isOpen, onClose }) =
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-500">Model</span>
-                  <span className="text-gray-300 font-mono">Gemini 2.5 Flash</span>
+                  <span className="text-gray-300 font-mono">Gemini 3 Flash</span>
                 </div>
               </div>
             </>

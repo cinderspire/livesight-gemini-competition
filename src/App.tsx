@@ -21,8 +21,6 @@ import type { SOSEvent, VehicleDangerLevel, TrafficLightDetection, ColorDetectio
 
 // Import feature services
 import { notifyContacts, createSOSEvent } from './features/sos/sosService';
-import { awardPoints, checkBadgeEligibility, updateStreak, recordNavigation } from './features/gamification/gamificationService';
-import StatsCard from './components/StatsCard';
 import type { ActiveFeature } from './types';
 
 /**
@@ -50,8 +48,6 @@ const LiveSightApp: React.FC = () => {
     setLastColorDetection,
     setLastExpirationDetection,
     batteryLevel,
-    userStats,
-    updateStats,
   } = useLiveSight();
 
   // Local State
@@ -64,7 +60,6 @@ const LiveSightApp: React.FC = () => {
   const [toastType, setToastType] = useState<'info' | 'success' | 'warning' | 'error' | 'achievement'>('info');
   const [apiKey, setApiKey] = useState<string>('');
   const [manualKeyInput, setManualKeyInput] = useState('');
-  const sessionStartRef = useRef<number>(0);
 
   // Refs
   const videoElementRef = useRef<HTMLVideoElement | null>(null);
@@ -314,9 +309,7 @@ const LiveSightApp: React.FC = () => {
         break;
       case 'REPORT_HAZARD': {
         addLog('User reported hazard via voice', 'high');
-        const { newStats: hazardStats } = awardPoints(userStats, 'HAZARD_REPORTED');
-        updateStats(hazardStats);
-        showToast('Hazard reported! +15 points', 'success');
+        showToast('Hazard reported', 'success');
         break;
       }
       case 'SHARE_LOCATION':
@@ -362,8 +355,6 @@ const LiveSightApp: React.FC = () => {
     showToast,
     setActiveFeature,
     addLog,
-    userStats,
-    updateStats,
     status,
   ]);
 
@@ -463,7 +454,6 @@ const LiveSightApp: React.FC = () => {
     setIsLive(true);
     setStatus('connecting');
     setTranscript('Connecting...');
-    sessionStartRef.current = Date.now();
 
     const service = new LiveSightService(
       keyToUse,
@@ -488,9 +478,6 @@ const LiveSightApp: React.FC = () => {
         onHazard: (text) => {
           hazardAlert();
           addLog(text, 'high');
-          // Award points for hazard detection
-          const { newStats: pts } = awardPoints(userStats, 'HAZARD_REPORTED');
-          updateStats(pts);
         },
         onVolume: (level) => {
           setVolume(level);
@@ -538,32 +525,10 @@ const LiveSightApp: React.FC = () => {
     stopFallMonitoring,
     setActiveFeature,
     handleSOSTrigger,
-    userStats,
-    updateStats,
   ]);
 
-  // Stop LiveSight + award gamification points
+  // Stop LiveSight
   const stopLiveSight = useCallback(() => {
-    // Award points for completed navigation session
-    if (sessionStartRef.current > 0) {
-      const duration = Date.now() - sessionStartRef.current;
-      if (duration > 10000) { // Only count sessions longer than 10 seconds
-        const navStats = recordNavigation(userStats, Math.round(duration / 1000));
-        const streakStats = updateStreak(userStats);
-        const merged = { ...userStats, ...navStats, ...streakStats };
-        updateStats(merged);
-
-        // Check for new badges
-        const newBadges = checkBadgeEligibility(merged as typeof userStats);
-        if (newBadges.length > 0) {
-          const allBadges = [...(userStats.badges || []), ...newBadges];
-          updateStats({ badges: allBadges });
-          showToast(`Badge earned: ${newBadges[0]?.name}!`, 'achievement');
-        }
-      }
-      sessionStartRef.current = 0;
-    }
-
     serviceRef.current?.stop();
     serviceRef.current = null;
     isStartingRef.current = false;
@@ -573,7 +538,7 @@ const LiveSightApp: React.FC = () => {
     setVolume(0);
     stopFallMonitoring();
     successFeedback();
-  }, [setStatus, setTranscript, setVolume, successFeedback, stopFallMonitoring, userStats, updateStats, showToast]);
+  }, [setStatus, setTranscript, setVolume, successFeedback, stopFallMonitoring]);
 
   // Toggle LiveSight
   const toggleLiveSight = useCallback(() => {
@@ -620,7 +585,7 @@ const LiveSightApp: React.FC = () => {
 
   // Background class based on contrast mode
   const bgClass = useMemo(() => {
-    return settings.contrastMode === 'high' ? 'bg-black' : 'bg-[#030712]';
+    return settings.contrastMode === 'high' ? 'bg-[#09090b]' : 'bg-[#0a0a0f]';
   }, [settings.contrastMode]);
 
   // Status indicator class
@@ -633,23 +598,27 @@ const LiveSightApp: React.FC = () => {
   // --- API ENTRY UI ---
   if (!process.env.API_KEY && !apiKey) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-6 relative overflow-hidden font-mono">
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-cyan-900 via-transparent to-transparent" />
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#09090b] text-white p-6 relative overflow-hidden">
+        {/* Background gradients */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-sky-500/[0.07] blur-[100px]" />
+          <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-500/[0.05] blur-[100px]" />
+        </div>
 
         <div className="w-full max-w-md z-10 space-y-10 animate-fade-in-up">
           {/* Header */}
           <div className="text-center">
-            <div className="inline-block px-3 py-1 border border-yellow-500/30 bg-yellow-500/10 rounded text-[10px] tracking-[0.3em] text-yellow-400 mb-4">
+            <div className="inline-block px-3 py-1.5 bg-white/[0.06] backdrop-blur-sm rounded-full text-[10px] tracking-[0.3em] text-sky-300 mb-5 border border-white/[0.08]">
               SEE BEYOND BARRIERS
             </div>
-            <h1 className="text-5xl font-black tracking-tighter mb-2">
-              LIVE<span className="text-cyan-400">SIGHT</span>
+            <h1 className="text-5xl font-black tracking-tighter mb-3">
+              LIVE<span className="bg-gradient-to-r from-sky-400 to-cyan-300 bg-clip-text text-transparent">SIGHT</span>
             </h1>
             <p className="text-gray-400 text-sm tracking-wide mb-1">
               Your Eyes to the World
             </p>
             <p className="text-gray-600 text-xs tracking-widest uppercase">
-              AI-Powered Navigation for the Visually Impaired
+              Powered by Gemini 3 Flash
             </p>
           </div>
 
@@ -657,32 +626,34 @@ const LiveSightApp: React.FC = () => {
           <div className="space-y-4">
             <button
               onClick={handleSelectKey}
-              className="w-full py-4 bg-gray-900 border border-gray-800 hover:border-cyan-500/50 hover:bg-gray-800 transition rounded-xl flex items-center justify-center gap-3 text-sm font-bold tracking-wider"
+              className="w-full py-4 glass-card rounded-2xl flex items-center justify-center gap-3 text-sm font-semibold tracking-wider hover:bg-white/[0.08] transition-all duration-300 active:scale-[0.98]"
               aria-label="Authenticate with Google"
             >
-              <span className="text-xl" aria-hidden="true">⚡</span>
+              <svg className="w-5 h-5 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
               GOOGLE AUTH
             </button>
 
             <div className="flex items-center gap-4 opacity-30">
-              <div className="h-px bg-white flex-1" />
+              <div className="h-px bg-gradient-to-r from-transparent via-white to-transparent flex-1" />
               <span className="text-[10px]">OR</span>
-              <div className="h-px bg-white flex-1" />
+              <div className="h-px bg-gradient-to-r from-transparent via-white to-transparent flex-1" />
             </div>
 
             <input
               type="password"
-              placeholder="ENTER_GEMINI_API_KEY"
+              placeholder="Enter Gemini API Key"
               value={manualKeyInput}
               onChange={(e) => setManualKeyInput(e.target.value)}
-              className="w-full bg-black border border-gray-800 p-4 rounded-xl text-center text-cyan-400 focus:border-cyan-500 outline-none transition"
+              className="w-full bg-white/[0.04] border border-white/[0.08] p-4 rounded-2xl text-center text-sky-300 focus:border-sky-500/50 focus:bg-white/[0.06] outline-none transition-all duration-300 placeholder:text-gray-600"
               aria-label="Enter API key manually"
             />
 
             <button
               onClick={handleManualKeySubmit}
               disabled={manualKeyInput.length < API_CONFIG.MIN_API_KEY_LENGTH}
-              className="w-full py-4 bg-cyan-600 disabled:opacity-50 hover:bg-cyan-500 text-black font-black tracking-widest rounded-xl transition shadow-[0_0_20px_rgba(8,145,178,0.4)] disabled:cursor-not-allowed"
+              className="w-full py-4 bg-gradient-to-r from-sky-500 to-cyan-500 disabled:opacity-40 hover:from-sky-400 hover:to-cyan-400 text-white font-bold tracking-widest rounded-2xl transition-all duration-300 shadow-[0_4px_20px_rgba(56,189,248,0.25)] disabled:cursor-not-allowed active:scale-[0.98]"
               aria-label="Initialize with manual API key"
             >
               INITIALIZE
@@ -690,21 +661,20 @@ const LiveSightApp: React.FC = () => {
           </div>
 
           {/* Features Preview */}
-          <div className="grid grid-cols-3 gap-3 mt-8">
+          <div className="grid grid-cols-3 gap-2 mt-8">
             {[
-              { icon: '🧭', label: 'Navigate' },
-              { icon: '🚦', label: 'Traffic' },
-              { icon: '📅', label: 'Expiry' },
-              { icon: '🎨', label: 'Colors' },
-              { icon: '🆘', label: 'SOS' },
-              { icon: '🏆', label: 'Rewards' },
+              { label: 'Navigate', color: 'text-sky-400' },
+              { label: 'Traffic', color: 'text-emerald-400' },
+              { label: 'Expiry', color: 'text-amber-400' },
+              { label: 'Colors', color: 'text-purple-400' },
+              { label: 'SOS', color: 'text-rose-400' },
+              { label: 'Explore', color: 'text-indigo-400' },
             ].map((feature) => (
               <div
                 key={feature.label}
-                className="text-center p-3 bg-gray-900/30 rounded-lg border border-gray-800"
+                className="text-center p-3 bg-white/[0.03] rounded-xl border border-white/[0.06] hover:bg-white/[0.06] transition-colors"
               >
-                <span className="text-xl">{feature.icon}</span>
-                <p className="text-[10px] text-gray-500 mt-1">{feature.label}</p>
+                <span className={`text-sm font-semibold ${feature.color}`}>{feature.label}</span>
               </div>
             ))}
           </div>
@@ -725,47 +695,52 @@ const LiveSightApp: React.FC = () => {
       <EmergencyContactsModal isOpen={showEmergencyContacts} onClose={() => setShowEmergencyContacts(false)} />
 
       {/* 1. TOP BAR (Status & Settings) */}
-      <header className="px-4 py-3 flex justify-between items-center bg-gradient-to-b from-black/80 to-transparent z-40">
+      <header className="px-4 py-3 flex justify-between items-center bg-gradient-to-b from-[#09090b]/90 via-[#09090b]/60 to-transparent backdrop-blur-sm z-40">
         <div className="flex items-center gap-3">
           <div
             className={`w-2 h-2 rounded-full shadow-[0_0_10px_currentColor] transition-all duration-500 ${statusIndicatorClass}`}
             aria-hidden="true"
           />
-          <span className="text-xs font-mono font-bold tracking-widest opacity-80">
-            LIVESIGHT<span className="opacity-40">_AI</span>
+          <span className="text-xs font-semibold tracking-widest opacity-80">
+            LIVE<span className="bg-gradient-to-r from-sky-400 to-cyan-300 bg-clip-text text-transparent">SIGHT</span>
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {/* Status Bar */}
           <StatusBar />
 
           {/* Emergency Contacts Button */}
           <button
             onClick={() => setShowEmergencyContacts(true)}
-            className="w-8 h-8 rounded-full bg-gray-900/50 border border-gray-700 flex items-center justify-center text-gray-400 hover:text-red-400 hover:border-red-500 transition"
+            className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-gray-400 hover:text-rose-400 hover:border-rose-500/30 hover:bg-rose-500/10 transition-all duration-200"
             aria-label="Manage emergency contacts"
           >
-            <span className="text-sm">📞</span>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
           </button>
 
           {/* Help Button */}
           <button
             onClick={() => setShowHelp(true)}
-            className="w-8 h-8 rounded-full bg-gray-900/50 border border-gray-700 flex items-center justify-center text-gray-400 hover:text-cyan-400 hover:border-cyan-500 transition"
+            className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-gray-400 hover:text-sky-400 hover:border-sky-500/30 hover:bg-sky-500/10 transition-all duration-200"
             aria-label="Show voice commands help"
           >
-            <span className="text-xs font-bold">?</span>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </button>
 
           {/* Settings Button */}
           <button
             onClick={() => setShowSettings(true)}
-            className="p-2 rounded-full bg-gray-900/50 border border-gray-700 hover:border-cyan-500 transition"
+            className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-gray-400 hover:text-white hover:border-white/20 hover:bg-white/[0.08] transition-all duration-200"
             aria-label="Open settings"
           >
-            <svg className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </button>
         </div>
@@ -774,7 +749,7 @@ const LiveSightApp: React.FC = () => {
       {/* 2. MAIN VIEWPORT */}
       <main className="flex-1 relative flex flex-col md:flex-row gap-3 px-4 pb-4 overflow-hidden">
         {/* CENTER: CAMERA FEED */}
-        <div className="flex-1 relative rounded-[2rem] overflow-hidden border border-gray-800 bg-gray-950 shadow-2xl">
+        <div className="flex-1 relative rounded-3xl overflow-hidden border border-white/[0.06] bg-[#0d0d12] shadow-2xl">
           {/* Compass Overlay */}
           <div className="absolute top-0 inset-x-0 z-30">
             <Compass />
@@ -782,8 +757,8 @@ const LiveSightApp: React.FC = () => {
 
           {/* Mode Indicator - Now linked to Active Feature */}
           <div className="absolute top-16 left-4 z-30">
-            <div className="px-3 py-1.5 bg-black/60 backdrop-blur-md rounded-lg border border-gray-700 flex flex-col items-start gap-1">
-              <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-wider">
+            <div className="px-3 py-1.5 glass-card rounded-xl flex flex-col items-start gap-0.5">
+              <span className="text-[10px] font-semibold text-sky-300 uppercase tracking-wider">
                 {activeFeature.toUpperCase()} MODE
               </span>
               <span className="text-[8px] text-gray-400 uppercase tracking-wide">
@@ -800,18 +775,20 @@ const LiveSightApp: React.FC = () => {
           />
 
           {/* OVERLAY: Transcript & Visualizer */}
-          <div className="absolute bottom-0 inset-x-0 p-6 pt-24 bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none flex flex-col items-center justify-end z-20">
+          <div className="absolute bottom-0 inset-x-0 p-6 pt-24 bg-gradient-to-t from-[#09090b] via-[#09090b]/80 to-transparent pointer-events-none flex flex-col items-center justify-end z-20">
             <div className="w-full max-w-xl space-y-4">
               {/* Transcript Bubble */}
               <div
-                className={`text-center transition-all duration-300 ${isLive ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                className={`text-center transition-all duration-500 ${isLive ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                   }`}
                 role="status"
                 aria-live="polite"
               >
-                <p className="text-lg md:text-xl font-bold leading-relaxed text-cyan-50 drop-shadow-md">
-                  "{transcript}"
-                </p>
+                <div className="inline-block glass-card rounded-2xl px-5 py-3 max-w-full">
+                  <p className="text-base md:text-lg font-semibold leading-relaxed text-white/90">
+                    {transcript}
+                  </p>
+                </div>
               </div>
 
               {/* Audio Waveform */}
@@ -863,18 +840,15 @@ const LiveSightApp: React.FC = () => {
 
         {/* SIDE: DATA LOGS (Desktop only) */}
         <aside className="hidden lg:flex w-72 flex-col gap-3" aria-label="Hazard logs">
-          {/* Stats Card - Compact */}
-          <StatsCard stats={userStats} compact />
-
           {/* Logs Panel */}
-          <div className="flex-1 bg-gray-900/40 backdrop-blur-md border border-gray-800 rounded-2xl p-4 flex flex-col overflow-hidden">
-            <div className="flex justify-between items-center mb-3 border-b border-gray-800 pb-2">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-gray-500">
+          <div className="flex-1 glass-card rounded-2xl p-4 flex flex-col overflow-hidden">
+            <div className="flex justify-between items-center mb-3 border-b border-white/[0.06] pb-2">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-500">
                 Hazard Stream
               </span>
-              <div className="flex gap-1">
-                <div className={`w-1.5 h-1.5 bg-red-500 rounded-full ${logs.length > 0 ? 'animate-ping' : ''}`} />
-                <div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
+              <div className="flex gap-1 items-center">
+                <div className={`w-1.5 h-1.5 bg-rose-500 rounded-full ${logs.length > 0 ? 'animate-ping' : ''}`} />
+                <div className="w-1.5 h-1.5 bg-rose-500 rounded-full" />
               </div>
             </div>
             <div
@@ -884,8 +858,8 @@ const LiveSightApp: React.FC = () => {
               {logs.map((log) => (
                 <article
                   key={log.id}
-                  className={`p-2 rounded-lg border-l-2 text-xs font-mono transition-all hover:bg-white/5 ${log.riskLevel === 'critical' ? 'border-red-600 bg-red-500/10' :
-                    log.riskLevel === 'high' ? 'border-red-500 bg-red-500/10' : 'border-cyan-500 bg-cyan-500/10'
+                  className={`p-2.5 rounded-xl border-l-2 text-xs transition-all hover:bg-white/[0.04] ${log.riskLevel === 'critical' ? 'border-rose-500 bg-rose-500/[0.08]' :
+                    log.riskLevel === 'high' ? 'border-amber-500 bg-amber-500/[0.06]' : 'border-sky-500 bg-sky-500/[0.06]'
                     }`}
                 >
                   <div className="flex justify-between opacity-50 mb-1 text-[10px]">
@@ -895,14 +869,14 @@ const LiveSightApp: React.FC = () => {
                         minute: '2-digit',
                       })}
                     </time>
-                    <span className="uppercase font-bold">{log.riskLevel}</span>
+                    <span className="uppercase font-semibold">{log.riskLevel}</span>
                   </div>
-                  <div className="font-bold text-gray-200 text-[11px]">{log.description}</div>
+                  <div className="font-medium text-gray-200 text-[11px]">{log.description}</div>
                 </article>
               ))}
               {logs.length === 0 && (
-                <div className="text-center mt-10 text-gray-700 text-xs font-mono">
-                  NO HAZARDS DETECTED
+                <div className="text-center mt-10 text-gray-600 text-xs">
+                  No hazards detected
                 </div>
               )}
             </div>
@@ -911,7 +885,7 @@ const LiveSightApp: React.FC = () => {
       </main>
 
       {/* 4. BOTTOM COMMAND CENTER */}
-      <footer className="px-4 py-4 pb-6 bg-black/80 backdrop-blur-xl border-t border-gray-800 z-50 flex flex-col gap-4">
+      <footer className="px-4 py-4 pb-6 glass border-t border-white/[0.06] z-50 flex flex-col gap-4">
 
         {/* Feature Selector */}
         <div className="w-full max-w-2xl mx-auto">
@@ -937,19 +911,19 @@ const LiveSightApp: React.FC = () => {
             <button
               onClick={toggleMute}
               disabled={!isLive}
-              className={`w-11 h-11 rounded-full flex items-center justify-center transition-all border ${isMicMuted
-                ? 'bg-red-500/20 border-red-500 text-red-500'
-                : 'bg-gray-800 border-gray-700 text-gray-400 hover:text-white'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              className={`relative w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-300 border ${isMicMuted
+                ? 'bg-rose-500/15 border-rose-500/40 text-rose-400'
+                : 'bg-white/[0.04] border-white/[0.08] text-gray-400 hover:text-white hover:bg-white/[0.08]'
+                } disabled:opacity-40 disabled:cursor-not-allowed`}
               aria-label={isMicMuted ? 'Unmute microphone' : 'Mute microphone'}
               aria-pressed={isMicMuted}
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
               </svg>
               {isMicMuted && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-full h-0.5 bg-red-500 rotate-45 rounded" />
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-8 h-0.5 bg-rose-500 rotate-45 rounded-full" />
                 </div>
               )}
             </button>
@@ -957,20 +931,20 @@ const LiveSightApp: React.FC = () => {
             {/* MAIN ACTIVATION BUTTON */}
             <button
               onClick={toggleLiveSight}
-              className={`relative w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-[0_0_30px_rgba(0,0,0,0.5)] active:scale-95 ${isLive
-                ? 'bg-red-600 shadow-[0_0_20px_rgba(220,38,38,0.6)]'
-                : 'bg-cyan-600 shadow-[0_0_20px_rgba(8,145,178,0.4)] hover:bg-cyan-500'
+              className={`relative w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 active:scale-95 ${isLive
+                ? 'bg-gradient-to-br from-rose-500 to-red-600 shadow-[0_4px_24px_rgba(244,63,94,0.35)]'
+                : 'bg-gradient-to-br from-sky-500 to-cyan-500 shadow-[0_4px_24px_rgba(56,189,248,0.3)] hover:shadow-[0_4px_30px_rgba(56,189,248,0.4)]'
                 }`}
               aria-label={isLive ? 'Stop LiveSight' : 'Start LiveSight'}
               aria-pressed={isLive}
             >
-              <div
-                className={`absolute inset-1 rounded-xl border-2 border-white/20 ${isLive ? 'animate-ping opacity-20' : ''}`}
-              />
+              {isLive && (
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-rose-500 to-red-600 animate-ping opacity-20" />
+              )}
               {isLive ? (
-                <div className="w-5 h-5 bg-white rounded-sm" />
+                <div className="w-5 h-5 bg-white rounded-sm z-10" />
               ) : (
-                <svg className="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-7 h-7 text-white ml-1 z-10" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M8 5v14l11-7z" />
                 </svg>
               )}
@@ -979,14 +953,14 @@ const LiveSightApp: React.FC = () => {
             {/* Logs Toggle (Mobile) */}
             <button
               onClick={() => setShowMobileLogs(!showMobileLogs)}
-              className={`w-11 h-11 rounded-full border flex items-center justify-center transition lg:hidden ${showMobileLogs
-                ? 'bg-cyan-900/50 border-cyan-500 text-cyan-400'
-                : 'bg-gray-800 border-gray-700 text-gray-400 hover:text-white'
+              className={`w-11 h-11 rounded-2xl border flex items-center justify-center transition-all duration-300 lg:hidden ${showMobileLogs
+                ? 'bg-sky-500/15 border-sky-500/40 text-sky-400'
+                : 'bg-white/[0.04] border-white/[0.08] text-gray-400 hover:text-white hover:bg-white/[0.08]'
                 }`}
               aria-label={showMobileLogs ? 'Hide event logs' : 'Show event logs'}
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" />
               </svg>
             </button>
 
@@ -996,17 +970,17 @@ const LiveSightApp: React.FC = () => {
 
           {/* Right: Mode & Weather Info */}
           <div className="hidden md:flex flex-col items-end gap-1 min-w-[100px]">
-            <div className={`text-xs font-bold ${settings.proactiveMode ? 'text-green-400' : 'text-gray-400'}`}>
+            <div className={`text-xs font-semibold ${settings.proactiveMode ? 'text-emerald-400' : 'text-gray-500'}`}>
               {settings.proactiveMode ? 'PROACTIVE' : 'REACTIVE'}
             </div>
-            <div className="text-[10px] text-gray-500 font-mono">
-              {weather.condition} • {weather.temperature}°C
+            <div className="text-[10px] text-gray-500">
+              {weather.condition} {weather.temperature > 0 ? `${weather.temperature}°C` : ''}
             </div>
           </div>
         </div>
 
         {/* Mobile SOS Button */}
-        <div className="md:hidden mt-4 flex justify-center">
+        <div className="md:hidden mt-2 flex justify-center">
           <SOSButton
             onTrigger={handleSOSTrigger}
             isActive={isLive}

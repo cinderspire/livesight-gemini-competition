@@ -46,30 +46,33 @@ export function useFallDetection(): UseFallDetectionReturn {
 
   // Start check-in process after fall detected
   const startCheckIn = useCallback(() => {
-    setState(prev => ({
-      ...prev,
-      awaitingResponse: true,
-      checkInCount: prev.checkInCount + 1,
-    }));
+    setState(prev => {
+      const newCount = prev.checkInCount + 1;
 
-    // If max check-ins reached, trigger auto-SOS
-    if (state.checkInCount >= FALL_DETECTION_CONFIG.MAX_CHECK_INS) {
-      console.log('[FallDetection] Max check-ins reached, triggering SOS');
-      sosCallbackRef.current?.();
-      setState(prev => ({
+      // If max check-ins reached, trigger auto-SOS
+      if (newCount >= FALL_DETECTION_CONFIG.MAX_CHECK_INS) {
+        console.log('[FallDetection] Max check-ins reached, triggering SOS');
+        sosCallbackRef.current?.();
+        return {
+          ...prev,
+          isFallDetected: false,
+          awaitingResponse: false,
+          checkInCount: 0,
+        };
+      }
+
+      // Schedule next check-in
+      checkInTimerRef.current = setTimeout(() => {
+        startCheckIn();
+      }, FALL_DETECTION_CONFIG.CHECK_IN_INTERVAL);
+
+      return {
         ...prev,
-        isFallDetected: false,
-        awaitingResponse: false,
-        checkInCount: 0,
-      }));
-      return;
-    }
-
-    // Schedule next check-in
-    checkInTimerRef.current = setTimeout(() => {
-      startCheckIn();
-    }, FALL_DETECTION_CONFIG.CHECK_IN_INTERVAL);
-  }, [state.checkInCount]);
+        awaitingResponse: true,
+        checkInCount: newCount,
+      };
+    });
+  }, []);
 
   // Handle motion event
   const handleMotion = useCallback((event: DeviceMotionEvent) => {

@@ -84,18 +84,18 @@ const CameraFeed: React.FC<CameraFeedProps> = memo(({ onVideoReady, isActive, is
 
   return (
     <div
-      className="relative w-full h-full bg-gray-950 overflow-hidden rounded-[2rem] border border-gray-800 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center group isolate"
+      className="relative w-full h-full bg-[#0d0d12] overflow-hidden rounded-3xl border border-white/[0.06] flex items-center justify-center group isolate"
       role="img"
       aria-label={isScanning ? 'Live camera feed with active scanning' : 'Camera feed on standby'}
     >
       {/* Loading State */}
       {isLoading && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-950 z-10">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0d0d12] z-10">
           <div className="relative w-24 h-24 mb-6">
-            <div className="absolute inset-0 border-2 border-gray-800 rounded-full" />
-            <div className="absolute inset-0 border-t-2 border-cyan-500 rounded-full animate-spin" />
+            <div className="absolute inset-0 border-2 border-white/[0.06] rounded-full" />
+            <div className="absolute inset-0 border-t-2 border-sky-400 rounded-full animate-spin" />
           </div>
-          <p className="font-mono text-xs text-cyan-500/80 uppercase tracking-[0.3em]">
+          <p className="text-xs text-sky-400/80 uppercase tracking-[0.3em] font-medium">
             Initializing Camera...
           </p>
         </div>
@@ -103,17 +103,18 @@ const CameraFeed: React.FC<CameraFeedProps> = memo(({ onVideoReady, isActive, is
 
       {/* Standby UI (Only if camera is OFF and not loading) */}
       {!isActive && !error && !isLoading && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-950 z-10">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0d0d12] z-10">
           <div className="relative w-32 h-32 mb-8">
-            <div className="absolute inset-0 border border-gray-800 rounded-full" />
-            <div className="absolute inset-0 border-t-2 border-cyan-500/50 rounded-full animate-spin-slow" />
+            <div className="absolute inset-0 border border-white/[0.06] rounded-full" />
+            <div className="absolute inset-0 border-t-2 border-sky-400/50 rounded-full animate-spin-slow" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-4xl filter drop-shadow-[0_0_10px_rgba(8,145,178,0.5)]" role="img" aria-hidden="true">
-                👁️
-              </span>
+              <svg className="w-12 h-12 text-sky-400/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
             </div>
           </div>
-          <p className="font-mono text-xs text-cyan-500/80 uppercase tracking-[0.3em] animate-pulse">
+          <p className="text-xs text-sky-400/70 uppercase tracking-[0.3em] animate-pulse font-medium">
             Initializing Sensors...
           </p>
         </div>
@@ -175,11 +176,11 @@ const CameraFeed: React.FC<CameraFeedProps> = memo(({ onVideoReady, isActive, is
             <>
               {/* Reticle */}
               <div
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 border border-cyan-400/30 rounded-full flex items-center justify-center pointer-events-none animate-pulse-ring"
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 border border-sky-400/20 rounded-full flex items-center justify-center pointer-events-none animate-pulse-ring"
                 aria-hidden="true"
               >
-                <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full shadow-[0_0_10px_#22D3EE]" />
-                <div className="absolute inset-0 border-t-2 border-b-2 border-transparent border-l-cyan-400/50 border-r-cyan-400/50 w-full h-full rounded-full animate-spin-slow" />
+                <div className="w-1.5 h-1.5 bg-sky-400 rounded-full shadow-[0_0_10px_rgba(56,189,248,0.6)]" />
+                <div className="absolute inset-0 border-t-2 border-b-2 border-transparent border-l-sky-400/30 border-r-sky-400/30 w-full h-full rounded-full animate-spin-slow" />
               </div>
 
               {/* TRAFFIC MODE OVERLAY */}
@@ -254,39 +255,39 @@ const CameraFeed: React.FC<CameraFeedProps> = memo(({ onVideoReady, isActive, is
               {/* Scanner Line (Default) */}
               {activeFeature !== 'expiration' && (
                 <div
-                  className="absolute inset-x-0 h-[2px] bg-cyan-400/30 shadow-[0_0_20px_rgba(34,211,238,0.6)] animate-scan pointer-events-none"
+                  className="absolute inset-x-0 h-[2px] bg-sky-400/25 shadow-[0_0_15px_rgba(56,189,248,0.4)] animate-scan pointer-events-none"
                   aria-hidden="true"
                 />
               )}
 
               {/* Live Indicator */}
               <div
-                className="absolute top-6 right-6 flex items-center gap-2 bg-black/60 px-3 py-1.5 rounded border border-cyan-900/50 backdrop-blur-md shadow-lg animate-fade-in-up"
+                className="absolute top-6 right-6 flex items-center gap-2 glass-card px-3 py-1.5 rounded-xl animate-fade-in-up"
                 role="status"
                 aria-live="polite"
               >
-                <div className="w-2 h-2 bg-red-500 rounded-full animate-blink shadow-[0_0_8px_red]" aria-hidden="true" />
-                <span className="text-[10px] font-mono font-bold text-cyan-100 tracking-widest">
-                  LIVE INFERENCE
+                <div className="w-2 h-2 bg-rose-500 rounded-full animate-blink shadow-[0_0_6px_rgba(244,63,94,0.6)]" aria-hidden="true" />
+                <span className="text-[10px] font-semibold text-white/80 tracking-widest">
+                  LIVE
                 </span>
               </div>
 
               {/* Compass Ticks */}
-              <div className="absolute top-4 left-0 right-0 h-4 flex justify-center gap-2 opacity-30 overflow-hidden px-12" aria-hidden="true">
+              <div className="absolute top-4 left-0 right-0 h-4 flex justify-center gap-2 opacity-20 overflow-hidden px-12" aria-hidden="true">
                 {Array.from({ length: 20 }).map((_, i) => (
                   <div
                     key={i}
-                    className={`w-[1px] ${i % 5 === 0 ? 'h-3 bg-cyan-400' : 'h-1 bg-white'}`}
+                    className={`w-[1px] ${i % 5 === 0 ? 'h-3 bg-sky-400' : 'h-1 bg-white'}`}
                   />
                 ))}
               </div>
 
               {/* Corners */}
-              <div className="absolute inset-4 pointer-events-none opacity-50" aria-hidden="true">
-                <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-cyan-500 rounded-tl-lg" />
-                <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-cyan-500 rounded-tr-lg" />
-                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-cyan-500 rounded-bl-lg" />
-                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-cyan-500 rounded-br-lg" />
+              <div className="absolute inset-4 pointer-events-none opacity-30" aria-hidden="true">
+                <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-sky-400 rounded-tl-lg" />
+                <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-sky-400 rounded-tr-lg" />
+                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-sky-400 rounded-bl-lg" />
+                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-sky-400 rounded-br-lg" />
               </div>
             </>
           )}

@@ -14,7 +14,5 @@ export { default as ErrorBoundary } from './ErrorBoundary';
 // Feature Components
 export { default as SOSButton } from './SOSButton';
 export { default as FeatureSelector } from './FeatureSelector';
-export { default as BadgeDisplay } from './BadgeDisplay';
-export { default as StatsCard } from './StatsCard';
 export { default as EmergencyContactsModal } from './EmergencyContactsModal';
 export { default as StatusBar } from './StatusBar';

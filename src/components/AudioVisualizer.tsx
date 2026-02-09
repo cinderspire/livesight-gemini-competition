@@ -38,9 +38,9 @@ const AudioVisualizer: React.FC<AudioVisualizerProps> = memo(({ isActive }) => {
       return 'bg-gray-600';
     }
     if (volume > UI_CONFIG.VOLUME_THRESHOLD_HIGH) {
-      return 'bg-yellow-400 shadow-[0_0_8px_#FACC15]';
+      return 'bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.5)]';
     }
-    return 'bg-cyan-400 shadow-[0_0_5px_#22D3EE]';
+    return 'bg-sky-400 shadow-[0_0_4px_rgba(56,189,248,0.4)]';
   }, [isMicMuted, volume]);
 
   return (

@@ -97,6 +97,12 @@ export class LiveSightService {
   private maxReconnectAttempts = 5; // More attempts
   private shouldReconnect = true;
   private activeFeature: string = 'navigation';
+  // Context persistence - track recent detections for smarter AI responses
+  private recentContext: string[] = [];
+  private readonly MAX_CONTEXT_ITEMS = 5;
+  // Offline fallback mode
+  private isOfflineMode = false;
+  private offlineModeInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     apiKey: string,
@@ -154,7 +160,7 @@ export class LiveSightService {
     const speedInstruction = speedMap[this.settings.voiceSpeed] || '';
 
     // Append general behavior rules that apply to all modes
-    return `${prompt}
+    let instruction = `${prompt}
 
 GENERAL RULES:
 - Keep responses short (Max 1-2 sentences).
@@ -163,6 +169,13 @@ GENERAL RULES:
 - Preferred language: ${preferredLang}. If the user speaks a different language, adapt to their language.
 - ${speedInstruction}
 - User's mobility aid: ${this.settings.mobilityAid}. Adapt guidance accordingly.`;
+
+    // Add recent context for continuity
+    if (this.recentContext.length > 0) {
+      instruction += `\n\nRECENT CONTEXT (last ${this.recentContext.length} detections):\n${this.recentContext.join('\n')}`;
+    }
+
+    return instruction;
   }
 
   /**
@@ -296,6 +309,7 @@ GENERAL RULES:
       // Store session reference for use in callbacks
       let sessionRef: Session | null = null;
 
+      const thinkingLevel = AI_CONFIG.THINKING_LEVEL[this.activeFeature] || 'medium';
       const session = await this.ai.live.connect({
         model: AI_CONFIG.MODEL_NAME,
         config: {
@@ -305,6 +319,9 @@ GENERAL RULES:
             voiceConfig: {
               prebuiltVoiceConfig: { voiceName: this.getVoiceName() }
             }
+          },
+          thinkingConfig: {
+            thinkingBudget: thinkingLevel === 'high' ? 2048 : thinkingLevel === 'medium' ? 1024 : 512,
           },
           tools: LIVE_API_TOOLS,
         },
@@ -419,6 +436,9 @@ GENERAL RULES:
         this.callbacks.onTranscript(`Connection lost. Reconnecting... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`, false);
         this.callbacks.onStatusChange('connecting');
 
+        // Enable offline fallback mode while reconnecting
+        this.enableOfflineMode();
+
         // Wait briefly before reconnecting
         setTimeout(() => {
           if (this.shouldReconnect) {
@@ -426,9 +446,9 @@ GENERAL RULES:
           }
         }, RECONNECT_DELAY);
       } else {
-        this.callbacks.onTranscript('Connection closed. Tap the button to restart.', false);
-        this.callbacks.onStatusChange('disconnected');
-        this.cleanup();
+        this.callbacks.onTranscript('Connection closed. Offline mode active. Tap to restart.', false);
+        this.callbacks.onStatusChange('offline');
+        this.enableOfflineMode();
       }
     }
   }
@@ -455,6 +475,7 @@ GENERAL RULES:
 
       let sessionRef: Session | null = null;
 
+      const reconnThinkingLevel = AI_CONFIG.THINKING_LEVEL[this.activeFeature] || 'medium';
       const session = await this.ai.live.connect({
         model: AI_CONFIG.MODEL_NAME,
         config: {
@@ -464,6 +485,9 @@ GENERAL RULES:
             voiceConfig: {
               prebuiltVoiceConfig: { voiceName: this.getVoiceName() }
             }
+          },
+          thinkingConfig: {
+            thinkingBudget: reconnThinkingLevel === 'high' ? 2048 : reconnThinkingLevel === 'medium' ? 1024 : 512,
           },
           tools: LIVE_API_TOOLS,
         },
@@ -504,8 +528,11 @@ GENERAL RULES:
     this.session = session;
     this.reconnectAttempts = 0; // Reset counter on success
 
+    // Disable offline mode
+    this.disableOfflineMode();
+
     this.callbacks.onStatusChange('connected');
-    this.callbacks.onTranscript('Reconnected! Resuming...', false);
+    this.callbacks.onTranscript('Reconnected! Resuming AI navigation...', false);
 
     // Restart video streaming
     this.startVideoStreaming();
@@ -669,6 +696,9 @@ GENERAL RULES:
       if (trimmedText) {
         this.callbacks.onTranscript(trimmedText, false);
 
+        // Update context persistence
+        this.addToContext(`[${this.activeFeature}] ${trimmedText}`);
+
         // --- FEATURE SPECIFIC PROCESSING ---
         // We attempt to parse the response based on the active feature
         if (this.activeFeature === 'traffic') {
@@ -740,6 +770,16 @@ GENERAL RULES:
   }
 
   /**
+   * Add detection to recent context for continuity
+   */
+  private addToContext(detection: string): void {
+    this.recentContext.push(detection);
+    if (this.recentContext.length > this.MAX_CONTEXT_ITEMS) {
+      this.recentContext.shift(); // Remove oldest
+    }
+  }
+
+  /**
    * Detect voice commands from user transcript
    */
   private detectCommand(text: string): void {
@@ -749,6 +789,54 @@ GENERAL RULES:
         return;
       }
     }
+  }
+
+  /**
+   * Enable offline fallback mode with sensor-based guidance
+   */
+  private enableOfflineMode(): void {
+    if (this.isOfflineMode) return;
+
+    this.isOfflineMode = true;
+    this.callbacks.onTranscript('Offline mode: Using sensors for basic navigation', false);
+
+    // Start periodic sensor-based guidance (compass + accelerometer)
+    this.offlineModeInterval = setInterval(() => {
+      if (!this.isOfflineMode) return;
+
+      // Use device orientation for basic directional guidance
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((pos) => {
+          const heading = pos.coords.heading;
+          if (heading !== null) {
+            const direction = Math.round(heading);
+            this.callbacks.onTranscript(`Heading ${direction}° (${this.getCardinalDirection(direction)})`, false);
+          }
+        }, null, { timeout: 5000, maximumAge: 10000 });
+      }
+    }, 10000); // Every 10 seconds
+  }
+
+  /**
+   * Disable offline mode when connection restored
+   */
+  private disableOfflineMode(): void {
+    if (!this.isOfflineMode) return;
+
+    this.isOfflineMode = false;
+    if (this.offlineModeInterval) {
+      clearInterval(this.offlineModeInterval);
+      this.offlineModeInterval = null;
+    }
+  }
+
+  /**
+   * Convert heading degrees to cardinal direction
+   */
+  private getCardinalDirection(degrees: number): string {
+    const directions = ['North', 'Northeast', 'East', 'Southeast', 'South', 'Southwest', 'West', 'Northwest'];
+    const index = Math.round(degrees / 45) % 8;
+    return directions[index] || 'North';
   }
 
   /**
@@ -906,6 +994,9 @@ GENERAL RULES:
   private cleanup(): void {
     this.isStarting = false; // Reset starting flag
     this.isConnected = false;
+
+    // Cleanup offline mode
+    this.disableOfflineMode();
 
     if (this.videoInterval) {
       clearInterval(this.videoInterval);

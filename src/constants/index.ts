@@ -33,7 +33,7 @@ export const VIDEO_CONFIG = {
 // ============================================
 
 export const AI_CONFIG = {
-  MODEL_NAME: 'gemini-2.5-flash-native-audio-preview-12-2025',
+  MODEL_NAME: 'gemini-3-flash-preview',
   VOICE_NAME: 'Kore',
   API_VERSION: 'v1alpha',
   // Gemini Live API voice options mapped to user preference
@@ -41,6 +41,15 @@ export const AI_CONFIG = {
     female: 'Kore',    // Clear female voice
     male: 'Puck',      // Clear male voice
     neutral: 'Aoede',  // Neutral-sounding voice
+  } as Record<string, string>,
+  // Thinking level per feature - Gemini 3 native thinking
+  THINKING_LEVEL: {
+    navigation: 'medium',    // Balance speed & accuracy for real-time nav
+    traffic: 'low',          // Fast response needed for traffic lights
+    expiration: 'medium',    // OCR needs moderate reasoning
+    color: 'low',            // Quick color identification
+    explore: 'high',         // Rich descriptions benefit from deeper thinking
+    community: 'medium',     // Social scene analysis
   } as Record<string, string>,
 } as const;
 
@@ -347,48 +356,6 @@ export const HELP_NETWORK_CONFIG = {
   REQUIRE_VERIFICATION: false,   // For MVP, allow any helper
 } as const;
 
-// ============================================
-// Gamification Configuration
-// ============================================
-
-export const GAMIFICATION_CONFIG = {
-  POINTS: {
-    NAVIGATION_COMPLETE: 10,
-    ROUTE_SHARED: 25,
-    HAZARD_REPORTED: 15,
-    REVIEW_WRITTEN: 20,
-    HELP_GIVEN: 30,
-    DAILY_LOGIN: 5,
-    STREAK_BONUS: 10, // per day
-    FIRST_NAVIGATION: 50,
-    ACHIEVEMENT_UNLOCK: 100,
-  },
-  LEVELS: [
-    { level: 1, name: 'Beginner', minPoints: 0 },
-    { level: 2, name: 'Explorer', minPoints: 100 },
-    { level: 3, name: 'Navigator', minPoints: 300 },
-    { level: 4, name: 'Pathfinder', minPoints: 600 },
-    { level: 5, name: 'Trailblazer', minPoints: 1000 },
-    { level: 6, name: 'Pioneer', minPoints: 1500 },
-    { level: 7, name: 'Expert', minPoints: 2500 },
-    { level: 8, name: 'Master', minPoints: 4000 },
-    { level: 9, name: 'Legend', minPoints: 6000 },
-    { level: 10, name: 'Champion', minPoints: 10000 },
-  ],
-  BADGES: [
-    { id: 'first_steps', name: 'First Steps', description: 'Complete your first navigation', icon: '👣', requirement: 1, type: 'navigation' },
-    { id: 'explorer_10', name: 'Explorer', description: 'Complete 10 navigations', icon: '🧭', requirement: 10, type: 'navigation' },
-    { id: 'explorer_50', name: 'Veteran Explorer', description: 'Complete 50 navigations', icon: '🗺️', requirement: 50, type: 'navigation' },
-    { id: 'explorer_100', name: 'Master Explorer', description: 'Complete 100 navigations', icon: '🏆', requirement: 100, type: 'navigation' },
-    { id: 'helper', name: 'Helpful Hand', description: 'Help another user', icon: '🤝', requirement: 1, type: 'social' },
-    { id: 'community_hero', name: 'Community Hero', description: 'Help 10 users', icon: '🦸', requirement: 10, type: 'social' },
-    { id: 'route_creator', name: 'Route Creator', description: 'Share your first route', icon: '📍', requirement: 1, type: 'community' },
-    { id: 'hazard_spotter', name: 'Hazard Spotter', description: 'Report 5 hazards', icon: '⚠️', requirement: 5, type: 'community' },
-    { id: 'streak_7', name: 'Week Warrior', description: '7 day streak', icon: '🔥', requirement: 7, type: 'streak' },
-    { id: 'streak_30', name: 'Monthly Master', description: '30 day streak', icon: '💫', requirement: 30, type: 'streak' },
-    { id: 'beta_tester', name: 'Beta Pioneer', description: 'Early adopter', icon: '💎', requirement: 1, type: 'special' },
-  ],
-} as const;
 
 // ============================================
 // Default Values
@@ -416,19 +383,6 @@ export const DEFAULT_WEATHER = {
 } as const;
 
 export const DEFAULT_TRANSCRIPT = 'System Standby. Tap to begin.';
-
-export const DEFAULT_STATS = {
-  totalNavigations: 0,
-  totalDistance: 0,
-  routesShared: 0,
-  helpGiven: 0,
-  helpReceived: 0,
-  currentStreak: 0,
-  longestStreak: 0,
-  points: 0,
-  level: 1,
-  badges: [],
-} as const;
 
 // ============================================
 // API Configuration
@@ -514,6 +468,13 @@ PRIORITY SYSTEM (highest first):
 4. ENVIRONMENT: Important landmarks, shops, intersections (only when relevant).
 
 OUTPUT FORMAT for obstacles: Always include clock direction (12=ahead, 3=right, 9=left) and distance in meters when possible. Example: "Pole at 2 o'clock, 3 meters. Step left."
+
+DIRECTIONAL GUIDANCE - CRITICAL: When obstacles are detected, provide SPECIFIC navigation instructions:
+- "Turn right 45 degrees, walk 5 meters" (NOT just "avoid")
+- "Step left 2 feet to clear the obstacle" (specific distance)
+- "Turn around, there's a clear path behind you"
+- "Move to 10 o'clock direction, sidewalk continues there"
+Always prioritize keeping the user MOVING FORWARD with clear alternate routes.
 
 RULES:
 - Maximum 1-2 sentences per response.

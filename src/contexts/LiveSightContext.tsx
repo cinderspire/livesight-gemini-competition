@@ -8,7 +8,6 @@ import type {
   RiskLevel,
   ObstacleCategory,
   LiveSightContextType,
-  UserStats,
   EmergencyContact,
   ActiveFeature,
   TrafficLightDetection,
@@ -16,24 +15,10 @@ import type {
   ExpirationDateResult
 } from '../types';
 import { fetchWeather } from '../services/weatherService';
-import { DEFAULT_SETTINGS, DEFAULT_WEATHER, DEFAULT_TRANSCRIPT, UI_CONFIG, GAMIFICATION_CONFIG } from '../constants';
+import { DEFAULT_SETTINGS, DEFAULT_WEATHER, DEFAULT_TRANSCRIPT, UI_CONFIG } from '../constants';
 
 // Create context with undefined default
 const LiveSightContext = createContext<LiveSightContextType | undefined>(undefined);
-
-// Default user stats
-const DEFAULT_USER_STATS: UserStats = {
-  totalNavigations: 0,
-  totalDistance: 0,
-  routesShared: 0,
-  helpGiven: 0,
-  helpReceived: 0,
-  currentStreak: 0,
-  longestStreak: 0,
-  points: 0,
-  level: 1,
-  badges: [],
-};
 
 // Default emergency contacts
 const DEFAULT_EMERGENCY_CONTACTS: EmergencyContact[] = [];
@@ -64,7 +49,6 @@ export function LiveSightProvider({ children }: LiveSightProviderProps): React.J
   const [isMicMuted, setIsMicMuted] = useState<boolean>(false);
 
   // New Feature State
-  const [userStats, setUserStats] = useState<UserStats>(DEFAULT_USER_STATS);
   const [emergencyContacts, setEmergencyContacts] = useState<EmergencyContact[]>(DEFAULT_EMERGENCY_CONTACTS);
   const [isOffline, setIsOffline] = useState<boolean>(!navigator.onLine);
   const [batteryLevel, setBatteryLevel] = useState<number>(100);
@@ -102,25 +86,6 @@ export function LiveSightProvider({ children }: LiveSightProviderProps): React.J
    */
   const clearLogs = useCallback(() => {
     setLogs([]);
-  }, []);
-
-  /**
-   * Update user stats partially
-   */
-  const updateStats = useCallback((newStats: Partial<UserStats>) => {
-    setUserStats(prev => {
-      const updated = { ...prev, ...newStats };
-      // Calculate level based on points
-      const levelConfig = GAMIFICATION_CONFIG.LEVELS;
-      for (let i = levelConfig.length - 1; i >= 0; i--) {
-        const level = levelConfig[i];
-        if (level && updated.points >= level.minPoints) {
-          updated.level = level.level;
-          break;
-        }
-      }
-      return updated;
-    });
   }, []);
 
   /**
@@ -195,17 +160,19 @@ export function LiveSightProvider({ children }: LiveSightProviderProps): React.J
    * Monitor battery level
    */
   useEffect(() => {
+    let batteryRef: any = null;
+    const onLevelChange = () => {
+      if (batteryRef) setBatteryLevel(Math.round(batteryRef.level * 100));
+    };
+
     const getBattery = async () => {
       try {
         // @ts-expect-error - getBattery is not in standard types
         if (navigator.getBattery) {
           // @ts-expect-error - getBattery is not in standard types
-          const battery = await navigator.getBattery();
-          setBatteryLevel(Math.round(battery.level * 100));
-
-          battery.addEventListener('levelchange', () => {
-            setBatteryLevel(Math.round(battery.level * 100));
-          });
+          batteryRef = await navigator.getBattery();
+          setBatteryLevel(Math.round(batteryRef.level * 100));
+          batteryRef.addEventListener('levelchange', onLevelChange);
         }
       } catch (error) {
         console.warn('[Context] Battery API not available:', error);
@@ -213,25 +180,13 @@ export function LiveSightProvider({ children }: LiveSightProviderProps): React.J
     };
 
     getBattery();
-  }, []);
 
-  /**
-   * Persist user stats to localStorage
-   */
-  useEffect(() => {
-    const savedStats = localStorage.getItem('livesight_user_stats');
-    if (savedStats) {
-      try {
-        setUserStats(JSON.parse(savedStats));
-      } catch (e) {
-        console.warn('[Context] Failed to parse saved stats:', e);
+    return () => {
+      if (batteryRef) {
+        batteryRef.removeEventListener('levelchange', onLevelChange);
       }
-    }
+    };
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem('livesight_user_stats', JSON.stringify(userStats));
-  }, [userStats]);
 
   /**
    * Persist emergency contacts to localStorage
@@ -272,8 +227,6 @@ export function LiveSightProvider({ children }: LiveSightProviderProps): React.J
     isMicMuted,
     setIsMicMuted,
     // New state
-    userStats,
-    updateStats,
     emergencyContacts,
     setEmergencyContacts,
     isOffline,
@@ -300,8 +253,6 @@ export function LiveSightProvider({ children }: LiveSightProviderProps): React.J
     volume,
     isMicMuted,
     // New dependencies
-    userStats,
-    updateStats,
     emergencyContacts,
     isOffline,
     batteryLevel,

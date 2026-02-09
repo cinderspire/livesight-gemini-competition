@@ -4,9 +4,9 @@
 
 **AI-Powered Real-Time Navigation Assistant for the Visually Impaired**
 
-*Built with Google Gemini 2.5 Flash & Gemini Live API*
+*Built with Google Gemini 3 Flash & Gemini Live API*
 
-[![Gemini 2.5 Flash](https://img.shields.io/badge/AI-Gemini%202.5%20Flash-blue.svg)](https://ai.google.dev/gemini-api/docs/models)
+[![Gemini 3 Flash](https://img.shields.io/badge/AI-Gemini%203%20Flash-blue.svg)](https://ai.google.dev/gemini-api/docs/models)
 [![Live API](https://img.shields.io/badge/API-Gemini%20Live-green.svg)](https://ai.google.dev/gemini-api/docs/live)
 [![Platform](https://img.shields.io/badge/platform-Web%20%7C%20Android%20%7C%20iOS-orange.svg)](package.json)
 
@@ -16,38 +16,75 @@
 
 ## Overview
 
-LiveSight is a **real-time AI navigation assistant** that empowers visually impaired users to explore the world safely and independently. Using **Google Gemini's multimodal Live API**, LiveSight streams live camera video and audio to Gemini, receiving instant spoken responses that guide users through their environment.
+LiveSight is a **real-time AI navigation assistant** that empowers visually impaired users to explore the world safely and independently. Using **Google Gemini 3 Flash's multimodal Live API with native thinking capabilities**, LiveSight streams live camera video and audio to Gemini, receiving instant spoken responses that guide users through their environment.
 
 This is not just another chatbot. LiveSight is a **life-changing accessibility tool** that acts as "AI Eyes" - continuously analyzing the user's surroundings and proactively warning about dangers, describing environments, reading text, and providing voice-guided navigation.
 
-## Gemini 2.5 Flash Integration
+## Gemini 3 Flash Integration
 
-LiveSight leverages the **Gemini API ecosystem** extensively:
+LiveSight leverages the **Gemini 3 Flash** model and its ecosystem extensively:
 
 ### Gemini Live API (Core Engine)
 - **Real-time multimodal streaming**: Continuous video frames + audio sent to Gemini for instant analysis
 - **Native audio output**: Gemini responds with natural speech, no TTS needed
 - **Bidirectional communication**: Users can speak commands while receiving AI guidance
 - **Context-aware responses**: System instructions dynamically change based on active feature mode
+- **Thinking Budget**: Adaptive `thinkingConfig` per feature mode - higher reasoning for exploration, faster for traffic lights
+
+### How We Use Gemini 3's Capabilities
+
+LiveSight is one of the most demanding real-time applications for Gemini's Live API. Here's how we push the boundaries:
+
+**Multimodal Real-Time Processing**: We stream camera frames at 2-7 FPS (adaptive per mode) alongside continuous microphone audio to Gemini 3 Flash via the Live API. The model analyzes both modalities simultaneously - detecting obstacles in video while processing voice commands in audio. This isn't batch processing; it's continuous, real-time understanding of a dynamic environment.
+
+**Native Thinking for Safety-Critical Decisions**: Gemini 3's thinking capabilities are essential for navigation safety. When a user approaches a complex intersection, the model needs to reason about traffic patterns, pedestrian signals, vehicle trajectories, and safe crossing paths - all within milliseconds. We configure `thinkingConfig` budgets dynamically: traffic mode uses low budgets (512 tokens) for split-second light detection, while explore mode uses high budgets (2048 tokens) for rich scene descriptions.
+
+**Function Calling for Structured Actions**: Rather than relying solely on text parsing, we define 4 Gemini function declarations (`reportObstacle`, `switchMode`, `triggerEmergency`, `announceEnvironment`) that allow the AI to trigger precise app actions. When Gemini detects a vehicle approaching from the left, it calls `reportObstacle` with clock direction, distance, and severity - triggering the exact haptic pattern the user needs.
+
+**Voice-First Interaction**: The Live API's native audio output eliminates TTS latency. Users hear Gemini's voice directly, making the experience feel like having a human guide. The bidirectional audio stream allows natural interruptions - a user can say "what's that on my right?" mid-guidance and receive an immediate contextual response.
 
 ### Key Gemini Features Used
 | Feature | How It's Used |
 |---------|--------------|
 | **Multimodal Input** | Live camera frames (JPEG) + microphone audio streamed simultaneously |
 | **Native Audio Output** | Gemini generates natural speech responses directly |
+| **Thinking Config** | Adaptive reasoning budgets (512-2048 tokens) per feature mode |
 | **System Instructions** | Dynamic prompts for 6 different AI modes (Navigation, Traffic, Color, etc.) |
-| **Function Calling** | 4 tool declarations enabling AI-to-app structured actions (obstacles, mode switch, emergency, environment) |
-| **Real-time Processing** | 2-5 FPS video analysis for obstacle/vehicle/traffic light detection |
+| **Function Calling** | 4 tool declarations enabling AI-to-app structured actions |
+| **Real-time Processing** | 2-7 FPS video analysis for obstacle/vehicle/traffic light detection |
 | **Voice Commands** | Natural language command detection from user speech transcripts |
 | **Context Switching** | Seamless mode changes via `sendClientContent` without reconnection |
+
+## What Makes LiveSight Different
+
+LiveSight stands apart from competitors like Be My Eyes, Seeing AI, and Envision AI:
+
+| Feature | LiveSight | Competitors |
+|---------|-----------|-------------|
+| **Real-Time Processing** | ✅ Continuous video + audio streaming (2-7 FPS) | ❌ Static image analysis or manual helper calls |
+| **Adaptive AI Thinking** | ✅ Gemini 3 thinking budgets per feature mode | ❌ Fixed model responses |
+| **Smart Route Suggestions** | ✅ "Turn right 45°, walk 5m" directional guidance | ❌ Only obstacle warnings, no navigation |
+| **Context Persistence** | ✅ AI remembers recent detections for smarter responses | ❌ Each query is isolated |
+| **Offline Fallback** | ✅ Sensor-based compass navigation when connection lost | ❌ Requires constant internet |
+| **Function Calling** | ✅ AI triggers app actions (SOS, mode switch, haptics) | ❌ Text-only responses |
+| **Open Source** | ✅ MIT License, free forever | ❌ Proprietary, subscription models |
+| **Multi-Feature Modes** | ✅ 6 specialized modes (Navigation, Traffic, Color, etc.) | ❌ Single-purpose or limited modes |
+
+**Key Innovations:**
+- **Directional Guidance**: Not just "there's a pole" but "turn right 45 degrees, walk 5 meters to avoid it"
+- **Memory**: AI tracks recent detections (last 5 events) for contextual understanding
+- **Graceful Degradation**: Falls back to compass/sensor navigation when internet fails
+- **Safety-First**: Function calling enables instant haptic alerts and emergency triggers
 
 ## Features
 
 ### 1. Real-Time AI Navigation
 - Continuous camera analysis with spoken guidance
+- **Smart route suggestions** with specific directions and distances
 - Clock-direction system (12 o'clock = ahead, 3 = right, 9 = left)
 - Obstacle detection (stairs, poles, curbs, potholes)
 - Weather-aware surface warnings
+- **Context-aware responses** - AI remembers recent detections
 
 ### 2. Vehicle Danger Detection
 - 3-tier alert system: Critical / Warning / Awareness
@@ -80,6 +117,13 @@ LiveSight leverages the **Gemini API ecosystem** extensively:
 - Sign and label reading
 - Place identification (cafes, pharmacies, bus stops)
 
+### 8. Offline Fallback Mode
+- **Sensor-based navigation** when internet connection lost
+- Compass heading announcements every 10 seconds
+- Cardinal direction guidance (North, East, South, West)
+- Graceful degradation - never leaves user stranded
+- Auto-switches back to AI mode when connection restored
+
 ## Architecture
 
 ```
@@ -91,9 +135,10 @@ LiveSight leverages the **Gemini API ecosystem** extensively:
 ├─────────────┴───────────┴───────────────────┤
 │           LiveSightService                  │
 │  ┌─────────────────────────────────────┐    │
-│  │  Gemini Live API Connection          │    │
+│  │  Gemini 3 Flash Live API            │    │
 │  │  - Video frame streaming (JPEG)     │    │
 │  │  - Audio streaming (PCM 16-bit)     │    │
+│  │  - Adaptive thinking budgets        │    │
 │  │  - Response audio playback          │    │
 │  │  - Transcript processing            │    │
 │  │  - Command detection                │    │
@@ -119,14 +164,14 @@ LiveSight leverages the **Gemini API ecosystem** extensively:
 
 | Category | Technology |
 |----------|------------|
-| **AI Engine** | Google Gemini Live API |
+| **AI Engine** | Google Gemini 3 Flash + Live API |
 | **Frontend** | React 19, TypeScript 5.8 |
 | **Build** | Vite 6 |
 | **Mobile** | Capacitor 8 (Android + iOS) |
 | **Audio** | Web Audio API, PCM 16-bit @ 16kHz/24kHz |
 | **Haptics** | Capacitor Haptics Plugin |
 | **Weather** | Open-Meteo API |
-| **UI** | Tailwind CSS, Custom HUD |
+| **UI** | Tailwind CSS, Custom Glassmorphism HUD |
 
 ## Quick Start
 
@@ -165,9 +210,9 @@ npm run android
 ## How Gemini Powers LiveSight
 
 1. **User starts the app** - Camera and microphone permissions are requested
-2. **Gemini Live API connection** - WebSocket session established with system instructions
-3. **Continuous streaming** - Video frames (2-5 FPS) and audio sent to Gemini in real-time
-4. **AI analysis** - Gemini analyzes the scene, detects hazards, and generates spoken responses
+2. **Gemini Live API connection** - WebSocket session established with system instructions and thinking config
+3. **Continuous streaming** - Video frames (2-7 FPS) and audio sent to Gemini in real-time
+4. **AI analysis** - Gemini 3 Flash analyzes the scene with adaptive thinking, detects hazards, generates spoken responses
 5. **Audio playback** - Native audio from Gemini played through speakers with 2.5x volume boost
 6. **Feature parsing** - AI responses parsed for traffic lights, colors, dates, vehicle dangers
 7. **Haptic feedback** - Capacitor vibration patterns triggered for different alert types
@@ -192,17 +237,6 @@ src/
 ├── types/           # TypeScript definitions
 └── utils/           # Audio utilities
 ```
-
-## Public Benefit & Open Source
-
-LiveSight is built **for the public good**. This project is completely free and open source — anyone can use, modify, and distribute it for any purpose. We believe AI-powered accessibility tools should be available to everyone, everywhere, without barriers.
-
-- **Free forever** — No subscription, no paywall, no ads
-- **Open source** — MIT License, use it however you want
-- **Community-driven** — Contributions, translations, and forks are welcome
-- **Non-commercial friendly** — NGOs, schools, and accessibility organizations can freely adopt and customize LiveSight
-
-> *"Technology should serve humanity. LiveSight exists to give independence back to those who need it most."*
 
 ## Setup & Installation
 
@@ -278,15 +312,26 @@ npx cap open ios
 | **iOS** | iOS 14+, Camera, Microphone, Location |
 | **Build** | Node.js 18+, npm 9+ |
 
+## Public Benefit & Open Source
+
+LiveSight is built **for the public good**. This project is completely free and open source - anyone can use, modify, and distribute it for any purpose. We believe AI-powered accessibility tools should be available to everyone, everywhere, without barriers.
+
+- **Free forever** - No subscription, no paywall, no ads
+- **Open source** - MIT License, use it however you want
+- **Community-driven** - Contributions, translations, and forks are welcome
+- **Non-commercial friendly** - NGOs, schools, and accessibility organizations can freely adopt and customize LiveSight
+
+> *"Technology should serve humanity. LiveSight exists to give independence back to those who need it most."*
+
 ## License
 
-MIT License — See [LICENSE](LICENSE) for details.
+MIT License - See [LICENSE](LICENSE) for details.
 
 ---
 
 <div align="center">
 
-**Built with Google Gemini**
+**Built with Google Gemini 3 Flash**
 
 *Empowering independence through AI innovation*
 

@@ -19,7 +19,7 @@
 
 <br/>
 
-[🎬 Watch Demo](#-[demo](https://www.youtube.com/shorts/t-8CzLcFolU)) · [🚀 Quick Start](#-quick-start) · [✨ Features](#-features) · [🏗️ Architecture](#%EF%B8%8F-architecture) · [🏆 Hackathon](#-hackathon-submission)
+🎬 Watch Demo- https://www.youtube.com/shorts/t-8CzLcFolU ) · [🚀 Quick Start](#-quick-start) · [✨ Features](#-features) · [🏗️ Architecture](#%EF%B8%8F-architecture) · [🏆 Hackathon](#-hackathon-submission)
 
 <br/>
 

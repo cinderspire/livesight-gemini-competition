@@ -76,3 +76,13 @@ ios/DerivedData/
 
 # Raw demo source videos
 public/demo/raw*.mp4
+releases/
+
+LiveSight_Submit/
+all picture videos/
+releases/
+*.zip
+*.apk
+
+dist/
+*.mp4

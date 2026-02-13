@@ -59,7 +59,7 @@ const LiveSightApp: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<'info' | 'success' | 'warning' | 'error' | 'achievement'>('info');
   const [apiKey, setApiKey] = useState<string>(() => {
-    try { return localStorage.getItem('livesight_api_key') || ''; } catch { return ''; }
+    try { return localStorage.getItem('livesight_api_key') || ''; } catch { /* empty */ return ''; }
   });
   const [manualKeyInput, setManualKeyInput] = useState('');
   const [showApiTutorial, setShowApiTutorial] = useState(false);
@@ -76,7 +76,7 @@ const LiveSightApp: React.FC = () => {
       if (demoParam) return `/demo/${demoParam}`;
       const stored = localStorage.getItem('livesight_demo');
       if (stored) return `/demo/${stored}`;
-    } catch {}
+    } catch { /* empty */ }
     return undefined;
   });
 
@@ -687,7 +687,7 @@ const LiveSightApp: React.FC = () => {
   const handleManualKeySubmit = useCallback(() => {
     if (manualKeyInput.length >= API_CONFIG.MIN_API_KEY_LENGTH) {
       setApiKey(manualKeyInput);
-      try { localStorage.setItem('livesight_api_key', manualKeyInput); } catch {}
+      try { localStorage.setItem('livesight_api_key', manualKeyInput); } catch { /* empty */ }
     }
   }, [manualKeyInput]);
 

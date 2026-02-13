@@ -29,6 +29,10 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.es2022,
+        process: 'readonly',
+        NodeJS: 'readonly',
+        PermissionName: 'readonly',
+        React: 'readonly',
       },
     },
     plugins: {

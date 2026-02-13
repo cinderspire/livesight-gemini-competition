@@ -226,8 +226,11 @@ GENERAL RULES:
   public updateLocation(lat: number, lon: number, extras?: { accuracy?: number; heading?: number; speed?: number }): void {
     if (this.session && this.isConnected) {
       let msg = `LOCATION_UPDATE: lat=${lat.toFixed(6)}, lon=${lon.toFixed(6)}`;
+      // eslint-disable-next-line eqeqeq
       if (extras?.heading != null) msg += `, heading=${Math.round(extras.heading)}°`;
+      // eslint-disable-next-line eqeqeq
       if (extras?.speed != null) msg += `, speed=${(extras.speed * 3.6).toFixed(1)}km/h`;
+      // eslint-disable-next-line eqeqeq
       if (extras?.accuracy != null) msg += `, accuracy=${Math.round(extras.accuracy)}m`;
       this.sendTextMessage(msg);
     }

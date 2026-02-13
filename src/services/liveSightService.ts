@@ -96,6 +96,7 @@ export class LiveSightService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5; // More attempts
   private shouldReconnect = true;
+  private rateLimitThrottle = 1; // 1 = normal, 2 = half speed, 4 = quarter speed
   private activeFeature: string = 'navigation';
   // Context persistence - track recent detections for smarter AI responses
   private recentContext: string[] = [];
@@ -430,6 +431,21 @@ GENERAL RULES:
         return;
       }
 
+      // Rate limit detection — auto-throttle FPS
+      if (reason.includes('429') || reason.includes('rate') || reason.includes('quota') || reason.includes('RESOURCE_EXHAUSTED')) {
+        this.rateLimitThrottle = Math.min(this.rateLimitThrottle * 2, 8);
+        console.warn(`[LiveSight] Rate limited! Throttling to ${this.rateLimitThrottle}x (slower FPS)`);
+        this.callbacks.onTranscript(`Rate limit hit. Slowing down camera feed... (${this.rateLimitThrottle}x slower)`, false);
+        // Auto-recover after 30 seconds
+        setTimeout(() => {
+          if (this.rateLimitThrottle > 1) {
+            this.rateLimitThrottle = Math.max(1, this.rateLimitThrottle / 2);
+            console.log(`[LiveSight] Rate limit easing: ${this.rateLimitThrottle}x`);
+            this.startVideoStreaming(); // Restart with new rate
+          }
+        }, 30000);
+      }
+
       // Try to reconnect if enabled and within limits
       if (this.shouldReconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
         this.reconnectAttempts++;
@@ -562,15 +578,20 @@ GENERAL RULES:
     if (this.videoInterval) clearInterval(this.videoInterval);
 
     const getInterval = () => {
-      if (this.activeFeature === 'traffic') return 150;    // ~7 FPS
-      if (this.activeFeature === 'navigation') return 200;  // 5 FPS
-      if (this.activeFeature === 'expiration') return 300;  // ~3 FPS
-      if (this.activeFeature === 'color') return 500;       // 2 FPS
-      return 250; // 4 FPS
+      // Apply throttle multiplier if rate-limited
+      const throttle = this.rateLimitThrottle || 1;
+      const base = (() => {
+        if (this.activeFeature === 'traffic') return 250;    // ~4 FPS (conservative for free tier)
+        if (this.activeFeature === 'navigation') return 333;  // 3 FPS
+        if (this.activeFeature === 'expiration') return 500;  // 2 FPS
+        if (this.activeFeature === 'color') return 1000;      // 1 FPS
+        return 500; // 2 FPS default (free tier safe)
+      })();
+      return Math.round(base * throttle);
     };
 
     const interval = getInterval();
-    console.log(`[LiveSight] Video stream: ${1000 / interval} FPS (${this.activeFeature})`);
+    console.log(`[LiveSight] Video stream: ${(1000 / interval).toFixed(1)} FPS (${this.activeFeature}, throttle: ${this.rateLimitThrottle || 1}x)`);
 
     this.videoInterval = setInterval(() => {
       this.sendRealtimeInput();

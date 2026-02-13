@@ -58,8 +58,11 @@ const LiveSightApp: React.FC = () => {
   const [showEmergencyContacts, setShowEmergencyContacts] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<'info' | 'success' | 'warning' | 'error' | 'achievement'>('info');
-  const [apiKey, setApiKey] = useState<string>('');
+  const [apiKey, setApiKey] = useState<string>(() => {
+    try { return localStorage.getItem('livesight_api_key') || ''; } catch { return ''; }
+  });
   const [manualKeyInput, setManualKeyInput] = useState('');
+  const [showApiTutorial, setShowApiTutorial] = useState(false);
 
   // Demo mode: ?demo=video_name.mp4 in URL or localStorage 'livesight_demo'
   // DEMO_MODE: Set to a video filename to enable, undefined to disable
@@ -684,6 +687,7 @@ const LiveSightApp: React.FC = () => {
   const handleManualKeySubmit = useCallback(() => {
     if (manualKeyInput.length >= API_CONFIG.MIN_API_KEY_LENGTH) {
       setApiKey(manualKeyInput);
+      try { localStorage.setItem('livesight_api_key', manualKeyInput); } catch {}
     }
   }, [manualKeyInput]);
 
@@ -726,6 +730,42 @@ const LiveSightApp: React.FC = () => {
             </p>
           </div>
 
+          {/* How to get API key - Tutorial */}
+          <button
+            onClick={() => setShowApiTutorial(!showApiTutorial)}
+            className="w-full py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-400 text-sm font-semibold tracking-wider hover:bg-emerald-500/15 transition-all"
+            aria-label="How to get a free API key"
+          >
+            🔑 HOW TO GET A FREE API KEY
+          </button>
+
+          {showApiTutorial && (
+            <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5 space-y-3 text-left animate-fade-in-up">
+              <h3 className="text-sky-400 font-bold text-sm tracking-wider">GET YOUR FREE GEMINI API KEY</h3>
+              <ol className="space-y-2 text-gray-300 text-xs leading-relaxed">
+                <li className="flex gap-2">
+                  <span className="text-sky-400 font-bold shrink-0">1.</span>
+                  <span>Go to <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-sky-400 underline">aistudio.google.com/apikey</a></span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-sky-400 font-bold shrink-0">2.</span>
+                  <span>Sign in with your Google account</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-sky-400 font-bold shrink-0">3.</span>
+                  <span>Click <strong className="text-white">"Create API Key"</strong></span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-sky-400 font-bold shrink-0">4.</span>
+                  <span>Copy the key and paste it below</span>
+                </li>
+              </ol>
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-emerald-300 text-xs">
+                ✅ <strong>100% Free</strong> — Gemini API has a generous free tier. No credit card needed.
+              </div>
+            </div>
+          )}
+
           {/* Auth Options */}
           <div className="space-y-4">
             <button
@@ -747,7 +787,7 @@ const LiveSightApp: React.FC = () => {
 
             <input
               type="password"
-              placeholder="Enter Gemini API Key"
+              placeholder="Paste your Gemini API Key here"
               value={manualKeyInput}
               onChange={(e) => setManualKeyInput(e.target.value)}
               className="w-full bg-white/[0.04] border border-white/[0.08] p-4 rounded-2xl text-center text-sky-300 focus:border-sky-500/50 focus:bg-white/[0.06] outline-none transition-all duration-300 placeholder:text-gray-600"

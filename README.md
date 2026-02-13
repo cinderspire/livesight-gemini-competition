@@ -69,7 +69,7 @@ Current solutions are expensive ($3,000+ for smart canes), limited in scope, or 
 
 </div>
 
-> 📺 **[Watch Full Demo on YouTube →](https://www.youtube.com/shorts/t-8CzLcFolU)** *(link coming soon)*
+> 📺 **[Watch Full Demo on YouTube →](https://youtube.com/shorts/t-8CzLcFolU)**
 
 ---
 

@@ -564,9 +564,28 @@ GENERAL RULES:
     this.clearConnectionTimeout();
     console.error('[LiveSight] Connection error:', error);
 
+    const msg = error?.message || '';
+    
+    // Don't crash on transient errors — try to reconnect
+    if (this.shouldReconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.reconnectAttempts++;
+      this.callbacks.onTranscript(`Connection error. Retrying... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`, false);
+      this.callbacks.onStatusChange('connecting');
+      setTimeout(() => {
+        if (this.shouldReconnect) {
+          this.callbacks.onTranscript('Reconnecting to Gemini...', false);
+        }
+      }, 2000 * this.reconnectAttempts);
+      return;
+    }
+
     let errorMessage = 'Connection error. ';
-    if (error.message) {
-      errorMessage += error.message;
+    if (msg.includes('API key') || msg.includes('401') || msg.includes('403')) {
+      errorMessage = 'Invalid API key. Please check your key at aistudio.google.com/apikey';
+    } else if (msg) {
+      errorMessage += msg;
+    } else {
+      errorMessage += 'Please check your internet connection and try again.';
     }
 
     this.callbacks.onTranscript(errorMessage, false);

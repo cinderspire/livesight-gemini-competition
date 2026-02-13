@@ -52,6 +52,7 @@ export function usePermissions() {
           checking: false,
         });
       } else {
+        // Web: just check, don't request
         try {
           const [cam, mic] = await Promise.all([
             navigator.permissions.query({ name: 'camera' as PermissionName }),
@@ -76,44 +77,64 @@ export function usePermissions() {
   const requestPermissions = useCallback(async (): Promise<boolean> => {
     try {
       if (isNative) {
-        // Step 1: Request camera via Capacitor (triggers native Android dialog)
+        // Step 1: Camera — with delay to avoid dialog collision
         let cameraGranted = false;
         try {
           const r = await Camera.requestPermissions({ permissions: ['camera'] });
           cameraGranted = r.camera === 'granted';
-        } catch { /* ignore */ }
+        } catch (e) {
+          console.warn('[Permissions] Camera request failed:', e);
+        }
 
-        // Step 2: Request microphone via getUserMedia (triggers native Android dialog)
+        // Small delay between permission dialogs to prevent crash
+        await new Promise(r => setTimeout(r, 500));
+
+        // Step 2: Microphone
         let microphoneGranted = false;
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
           stream.getTracks().forEach(t => t.stop());
           microphoneGranted = true;
-        } catch { /* ignore */ }
+        } catch (e) {
+          console.warn('[Permissions] Microphone request failed:', e);
+        }
 
-        // Step 3: Request location via Capacitor (non-blocking, ok if denied)
+        await new Promise(r => setTimeout(r, 500));
+
+        // Step 3: Location (optional, non-blocking)
         let locationGranted = false;
         try {
           const r = await Geolocation.requestPermissions();
           locationGranted = r.location === 'granted';
-        } catch { /* ignore */ }
+        } catch {
+          // Location is optional
+        }
 
         const allGranted = cameraGranted && microphoneGranted;
         setPermissions({ camera: cameraGranted, microphone: microphoneGranted, location: locationGranted, allGranted, checking: false });
         return allGranted;
       } else {
-        // Web: single getUserMedia call triggers both camera + mic
+        // Web: single getUserMedia triggers both camera + mic dialog
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
           stream.getTracks().forEach(t => t.stop());
           setPermissions({ camera: true, microphone: true, location: false, allGranted: true, checking: false });
           return true;
-        } catch {
-          setPermissions({ camera: false, microphone: false, location: false, allGranted: false, checking: false });
+        } catch (e) {
+          console.warn('[Permissions] getUserMedia failed:', e);
+          // Try camera only
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            stream.getTracks().forEach(t => t.stop());
+            setPermissions({ camera: true, microphone: false, location: false, allGranted: false, checking: false });
+          } catch {
+            setPermissions({ camera: false, microphone: false, location: false, allGranted: false, checking: false });
+          }
           return false;
         }
       }
-    } catch {
+    } catch (e) {
+      console.error('[Permissions] Unexpected error:', e);
       return false;
     }
   }, [isNative]);

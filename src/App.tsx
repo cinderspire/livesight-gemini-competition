@@ -58,10 +58,12 @@ const LiveSightApp: React.FC = () => {
   const [showEmergencyContacts, setShowEmergencyContacts] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<'info' | 'success' | 'warning' | 'error' | 'achievement'>('info');
+  // Default demo key — users can replace with their own
+  const DEFAULT_API_KEY = 'AIzaSyA1jZXrjeL_aMXopAzku2Qcvv0fjcRwo_8';
   const [apiKey, setApiKey] = useState<string>(() => {
-    try { return localStorage.getItem('livesight_api_key') || ''; } catch { /* empty */ return ''; }
+    try { return localStorage.getItem('livesight_api_key') || DEFAULT_API_KEY; } catch { /* empty */ return DEFAULT_API_KEY; }
   });
-  const [manualKeyInput, setManualKeyInput] = useState('');
+  const [manualKeyInput, setManualKeyInput] = useState(DEFAULT_API_KEY);
   const [showApiTutorial, setShowApiTutorial] = useState(false);
 
   // Demo mode: ?demo=video_name.mp4 in URL or localStorage 'livesight_demo'

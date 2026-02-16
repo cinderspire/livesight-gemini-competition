@@ -1,459 +1,219 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LiveSight - AI Navigation for the Visually Impaired</title>
-    <meta name="description" content="Real-time AI navigation assistant powered by Google Gemini 3 Flash. Open source accessibility tool for visually impaired users.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <meta name="description" content="LiveSight - A proactive navigation assistant for the visually impaired using AI" />
+    <meta name="theme-color" content="#050505" />
+
+    <title>LiveSight - AI Vision Assistant | Powered by Gemini</title>
+
+    <!-- Preconnect to external resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
+
+    <!-- Inline critical styles -->
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+      /* Base styles for immediate paint */
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background-color: #050505;
+        color: #ffffff;
+        overflow-x: hidden;
+        margin: 0;
+        padding: 0;
+      }
+
+      .font-mono {
+        font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      }
+
+      /* Accessibility Focus */
+      button:focus-visible,
+      a:focus-visible,
+      input:focus-visible {
+        outline: 4px solid #FACC15;
+        outline-offset: 4px;
+        box-shadow: 0 0 15px #FACC15;
+      }
+
+      /* Reduced motion preference */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
         }
+      }
 
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
-            color: #ffffff;
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
+      /* Screen reader only */
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
+      /* Custom Scrollbar */
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
 
-        /* Hero Section */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-            padding: 80px 20px;
-        }
+      /* Animations */
+      @keyframes scanline {
+        0% { transform: translateY(-100%); }
+        100% { transform: translateY(100%); }
+      }
+      .animate-scan {
+        animation: scanline 3s linear infinite;
+      }
 
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: -20%;
-            left: -10%;
-            width: 60%;
-            height: 60%;
-            background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%);
-            filter: blur(100px);
-            animation: float 20s ease-in-out infinite;
-        }
+      @keyframes pulse-ring {
+        0% { transform: scale(0.8); opacity: 0.5; }
+        100% { transform: scale(1.3); opacity: 0; }
+      }
+      .animate-pulse-ring {
+        animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
 
-        .hero::after {
-            content: '';
-            position: absolute;
-            bottom: -20%;
-            right: -10%;
-            width: 60%;
-            height: 60%;
-            background: radial-gradient(circle, rgba(167, 139, 250, 0.15) 0%, transparent 70%);
-            filter: blur(100px);
-            animation: float 25s ease-in-out infinite reverse;
-        }
+      @keyframes fade-in-up {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fade-in-up {
+        animation: fade-in-up 0.3s ease-out forwards;
+      }
 
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            50% { transform: translate(30px, -30px) rotate(5deg); }
-        }
+      @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+      }
+      .animate-blink {
+        animation: blink 1.5s infinite;
+      }
 
-        .hero-content {
-            position: relative;
-            z-index: 2;
-            text-align: center;
-            max-width: 900px;
-        }
+      @keyframes spin-slow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      .animate-spin-slow {
+        animation: spin-slow 10s linear infinite;
+      }
 
-        .badge {
-            display: inline-block;
-            background: rgba(56, 189, 248, 0.1);
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            padding: 8px 20px;
-            border-radius: 50px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #38bdf8;
-            margin-bottom: 24px;
-            backdrop-filter: blur(10px);
-        }
+      /* Typing Effect */
+      @keyframes typing {
+        from { width: 0; }
+        to { width: 100%; }
+      }
+      .typing-effect {
+        overflow: hidden;
+        white-space: nowrap;
+        border-right: 2px solid #22D3EE;
+        animation: typing 1s steps(40, end), blink 0.75s step-end infinite;
+        display: inline-block;
+        vertical-align: bottom;
+      }
 
-        h1 {
-            font-size: clamp(2.5rem, 6vw, 5rem);
-            font-weight: 800;
-            margin-bottom: 24px;
-            background: linear-gradient(135deg, #ffffff 0%, #38bdf8 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            line-height: 1.1;
-        }
+      /* HUD Elements */
+      .mask-fade-sides {
+        mask-image: linear-gradient(to right, transparent, black 20%, black 80%, transparent);
+        -webkit-mask-image: linear-gradient(to right, transparent, black 20%, black 80%, transparent);
+      }
 
-        .subtitle {
-            font-size: clamp(1.1rem, 2.5vw, 1.5rem);
-            color: #94a3b8;
-            margin-bottom: 40px;
-            font-weight: 400;
-        }
+      .vignette {
+        background: radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, 0.8) 100%);
+      }
 
-        .cta-buttons {
-            display: flex;
-            gap: 16px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 48px;
-        }
+      .tactical-grid {
+        background-image:
+          linear-gradient(#06b6d4 1px, transparent 1px),
+          linear-gradient(90deg, #06b6d4 1px, transparent 1px);
+        background-size: 80px 80px;
+      }
 
-        .btn {
-            padding: 16px 32px;
-            font-size: 16px;
-            font-weight: 600;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
+      /* Loading screen */
+      #loading-screen {
+        position: fixed;
+        inset: 0;
+        background: #050505;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.3s ease-out;
+      }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
-            color: #ffffff;
-            box-shadow: 0 10px 40px rgba(56, 189, 248, 0.3);
-        }
+      #loading-screen.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 50px rgba(56, 189, 248, 0.4);
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #ffffff;
-            backdrop-filter: blur(10px);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        /* Stats */
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 24px;
-            margin-top: 48px;
-        }
-
-        .stat {
-            text-align: center;
-            padding: 24px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-        }
-
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #38bdf8 0%, #a78bfa 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 8px;
-        }
-
-        .stat-label {
-            font-size: 14px;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* Features */
-        .features {
-            padding: 120px 20px;
-        }
-
-        .section-title {
-            text-align: center;
-            font-size: clamp(2rem, 4vw, 3rem);
-            font-weight: 800;
-            margin-bottom: 60px;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 32px;
-        }
-
-        .feature-card {
-            padding: 32px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all 0.3s ease;
-        }
-
-        .feature-card:hover {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: rgba(56, 189, 248, 0.3);
-            transform: translateY(-5px);
-        }
-
-        .feature-icon {
-            font-size: 3rem;
-            margin-bottom: 16px;
-        }
-
-        .feature-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 12px;
-        }
-
-        .feature-desc {
-            color: #94a3b8;
-            font-size: 1rem;
-        }
-
-        /* Download Section */
-        .download {
-            padding: 120px 20px;
-            background: rgba(56, 189, 248, 0.05);
-        }
-
-        .download-card {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 48px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            text-align: center;
-        }
-
-        .apk-icon {
-            font-size: 4rem;
-            margin-bottom: 24px;
-        }
-
-        /* Footer */
-        footer {
-            padding: 60px 20px;
-            text-align: center;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 32px;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-        }
-
-        .footer-links a {
-            color: #94a3b8;
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .footer-links a:hover {
-            color: #38bdf8;
-        }
-
-        .copyright {
-            color: #64748b;
-            font-size: 14px;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .hero {
-                padding: 60px 20px;
-            }
-
-            .cta-buttons {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-                justify-content: center;
-            }
-        }
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
     </style>
-</head>
-<body>
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-content">
-            <div class="badge">🚀 Powered by Google Gemini 3 Flash</div>
-            <h1>See Beyond Barriers</h1>
-            <p class="subtitle">
-                AI-powered real-time navigation assistant for the visually impaired.
-                Built with Google Gemini Live API for instant multimodal guidance.
-            </p>
+    <script type="module" crossorigin src="/assets/index-B9xfFx-s.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/react-j2mp3VYR.js">
+    <link rel="modulepreload" crossorigin href="/assets/genai-Dpypk8sk.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-CmvloKP9.css">
+  </head>
+  <body>
+    <!-- Loading Screen (shown until React mounts) -->
+    <div id="loading-screen" aria-live="polite">
+      <div style="position:relative;width:64px;height:64px;margin-bottom:16px">
+        <div style="position:absolute;inset:0;border:2px solid #1f2937;border-radius:50%"></div>
+        <div style="position:absolute;inset:0;border-top:2px solid #06b6d4;border-right:2px solid transparent;border-bottom:2px solid transparent;border-left:2px solid transparent;border-radius:50%;animation:spin 1s linear infinite"></div>
+      </div>
+      <p style="font-family:'JetBrains Mono',monospace;font-size:12px;color:rgba(6,182,212,0.8);text-transform:uppercase;letter-spacing:0.1em">
+        INITIALIZING LIVESIGHT...
+      </p>
+    </div>
 
-            <div class="cta-buttons">
-                <a href="../releases/LiveSight-v2.0.0.apk" class="btn btn-primary" download>
-                    📱 Download APK (19 MB)
-                </a>
-                <a href="https://github.com/cinderspire/livesight-gemini-competition" class="btn btn-secondary" target="_blank">
-                    ⭐ View on GitHub
-                </a>
-            </div>
+    <!-- React Root -->
+    <div id="root"></div>
 
-            <div class="stats">
-                <div class="stat">
-                    <div class="stat-value">100%</div>
-                    <div class="stat-label">Free Forever</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value">2.2B</div>
-                    <div class="stat-label">People Helped</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value">Open</div>
-                    <div class="stat-label">Source</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value">Real</div>
-                    <div class="stat-label">Time AI</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section class="features">
-        <div class="container">
-            <h2 class="section-title">Powered by Gemini 3 Flash</h2>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">🧭</div>
-                    <h3 class="feature-title">Real-Time Navigation</h3>
-                    <p class="feature-desc">
-                        Continuous AI guidance with smart route suggestions. Not just "there's a pole" but "turn right 45°, walk 5 meters."
-                    </p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">🚦</div>
-                    <h3 class="feature-title">Traffic Light Detection</h3>
-                    <p class="feature-desc">
-                        Real-time traffic light recognition with pedestrian signals and countdown timers for safe crossing.
-                    </p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">🎨</div>
-                    <h3 class="feature-title">Color Recognition</h3>
-                    <p class="feature-desc">
-                        Identify clothing colors, patterns, and get outfit matching suggestions for confident dressing.
-                    </p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">📅</div>
-                    <h3 class="feature-title">Expiration Reader</h3>
-                    <p class="feature-desc">
-                        Read expiration dates on products with OCR-like detection and safety status classification.
-                    </p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">🆘</div>
-                    <h3 class="feature-title">Emergency SOS</h3>
-                    <p class="feature-desc">
-                        Automatic fall detection with emergency contact notification and location sharing.
-                    </p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">📡</div>
-                    <h3 class="feature-title">Offline Fallback</h3>
-                    <p class="feature-desc">
-                        Sensor-based compass navigation when internet connection is lost. Never leaves you stranded.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Download Section -->
-    <section class="download">
-        <div class="container">
-            <div class="download-card">
-                <div class="apk-icon">📦</div>
-                <h2 class="section-title" style="margin-bottom: 16px;">Download Now</h2>
-                <p class="feature-desc" style="margin-bottom: 32px;">
-                    Android 7.0+ | 19 MB | No subscription, no ads, completely free
-                </p>
-                <a href="../releases/LiveSight-v2.0.0.apk" class="btn btn-primary" download>
-                    📱 Download LiveSight APK
-                </a>
-                <p style="margin-top: 24px; font-size: 14px; color: #64748b;">
-                    ⚠️ Enable "Install from Unknown Sources" in Android settings
-                </p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div class="footer-links">
-                <a href="https://github.com/cinderspire/livesight-gemini-competition">GitHub</a>
-                <a href="https://github.com/cinderspire/livesight-gemini-competition/blob/master/README.md">Documentation</a>
-                <a href="https://github.com/cinderspire/livesight-gemini-competition/issues">Report Issue</a>
-                <a href="https://aistudio.google.com/">Get Gemini API Key</a>
-            </div>
-            <p class="copyright">
-                © 2026 LiveSight | MIT License | Built with Google Gemini 3 Flash<br>
-                <strong>100% Free | No Rights Reserved | Public Benefit Project</strong>
-            </p>
-        </div>
-    </footer>
-
+    <!-- Script to hide loading screen when React mounts -->
     <script>
-        // Smooth scroll
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
-        });
-
-        // Track APK downloads
-        document.querySelectorAll('a[download]').forEach(link => {
-            link.addEventListener('click', () => {
-                console.log('APK download started');
-            });
-        });
+      // Hide loading screen when React app is ready
+      function hideLoading() {
+        var loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) {
+          loadingScreen.classList.add('hidden');
+          setTimeout(function() { loadingScreen.remove(); }, 500);
+        }
+      }
+      // Wait for React root to have content
+      var observer = new MutationObserver(function(mutations) {
+        var root = document.getElementById('root');
+        if (root && root.children.length > 0) {
+          observer.disconnect();
+          hideLoading();
+        }
+      });
+      var root = document.getElementById('root');
+      if (root) {
+        observer.observe(root, { childList: true });
+      }
+      // Fallback timeout
+      setTimeout(hideLoading, 5000);
     </script>
-</body>
+
+    <!-- Main Application Script -->
+  </body>
 </html>

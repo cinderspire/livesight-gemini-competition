@@ -109,6 +109,7 @@ export class LiveSightService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5; // More attempts
   private shouldReconnect = true;
+  private rateLimitThrottle = 1; // 1 = normal, 2 = half speed, 4 = quarter speed
   private activeFeature: string = 'navigation';
   // Context persistence - track recent detections for smarter AI responses
   private recentContext: string[] = [];
@@ -246,8 +247,11 @@ GENERAL RULES:
   public updateLocation(lat: number, lon: number, extras?: { accuracy?: number; heading?: number; speed?: number }): void {
     if (this.session && this.isConnected) {
       let msg = `LOCATION_UPDATE: lat=${lat.toFixed(6)}, lon=${lon.toFixed(6)}`;
+      // eslint-disable-next-line eqeqeq
       if (extras?.heading != null) msg += `, heading=${Math.round(extras.heading)}°`;
+      // eslint-disable-next-line eqeqeq
       if (extras?.speed != null) msg += `, speed=${(extras.speed * 3.6).toFixed(1)}km/h`;
+      // eslint-disable-next-line eqeqeq
       if (extras?.accuracy != null) msg += `, accuracy=${Math.round(extras.accuracy)}m`;
       this.sendTextMessage(msg);
     }
@@ -451,6 +455,21 @@ GENERAL RULES:
         return;
       }
 
+      // Rate limit detection — auto-throttle FPS
+      if (reason.includes('429') || reason.includes('rate') || reason.includes('quota') || reason.includes('RESOURCE_EXHAUSTED')) {
+        this.rateLimitThrottle = Math.min(this.rateLimitThrottle * 2, 8);
+        console.warn(`[LiveSight] Rate limited! Throttling to ${this.rateLimitThrottle}x (slower FPS)`);
+        this.callbacks.onTranscript(`Rate limit hit. Slowing down camera feed... (${this.rateLimitThrottle}x slower)`, false);
+        // Auto-recover after 30 seconds
+        setTimeout(() => {
+          if (this.rateLimitThrottle > 1) {
+            this.rateLimitThrottle = Math.max(1, this.rateLimitThrottle / 2);
+            console.log(`[LiveSight] Rate limit easing: ${this.rateLimitThrottle}x`);
+            this.startVideoStreaming(); // Restart with new rate
+          }
+        }, 30000);
+      }
+
       // Try to reconnect if enabled and within limits
       if (this.shouldReconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
         this.reconnectAttempts++;
@@ -562,8 +581,25 @@ GENERAL RULES:
     this.clearConnectionTimeout();
     console.error('[LiveSight] Connection error:', error);
 
+    const msg = error?.message || '';
+
+    // Don't crash on transient errors — try to reconnect
+    if (this.shouldReconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
+      // Don't retry on auth errors
+      if (!msg.includes('401') && !msg.includes('403') && !msg.includes('API key')) {
+        this.reconnectAttempts++;
+        this.callbacks.onTranscript(`Connection error. Retrying... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`, false);
+        this.callbacks.onStatusChange('connecting');
+        setTimeout(() => {
+          if (this.shouldReconnect) {
+            this.reconnect();
+          }
+        }, 2000 * this.reconnectAttempts);
+        return;
+      }
+    }
+
     let errorMessage = 'Baglanti hatasi. ';
-    const msg = error.message || '';
 
     if (msg.includes('401') || msg.includes('403') || msg.includes('API key')) {
       errorMessage = 'API key gecersiz. Ayarlar > API sekmesinden yeni key girin.';
@@ -573,6 +609,8 @@ GENERAL RULES:
       errorMessage += 'Internet baglantinizi kontrol edin.';
     } else if (msg) {
       errorMessage += msg;
+    } else {
+      errorMessage += 'Please check your internet connection and try again.';
     }
 
     this.callbacks.onTranscript(errorMessage, false);
@@ -587,20 +625,24 @@ GENERAL RULES:
     if (this.videoInterval) clearInterval(this.videoInterval);
 
     const getInterval = () => {
-      // If user set a custom FPS, use it
+      // If user set a custom FPS, use it (with rate limit throttle applied)
+      const throttle = this.rateLimitThrottle || 1;
       if (this.settings.customFps > 0) {
-        return Math.round(1000 / this.settings.customFps);
+        return Math.round((1000 / this.settings.customFps) * throttle);
       }
-      // Mode-based defaults
-      if (this.activeFeature === 'traffic') return 250;    // 4 FPS
-      if (this.activeFeature === 'navigation') return 333;  // 3 FPS
-      if (this.activeFeature === 'expiration') return 500;  // 2 FPS
-      if (this.activeFeature === 'color') return 1000;      // 1 FPS
-      return 500; // 2 FPS default (explore/community)
+      // Mode-based defaults with throttle multiplier
+      const base = (() => {
+        if (this.activeFeature === 'traffic') return 250;    // ~4 FPS
+        if (this.activeFeature === 'navigation') return 333;  // 3 FPS
+        if (this.activeFeature === 'expiration') return 500;  // 2 FPS
+        if (this.activeFeature === 'color') return 1000;      // 1 FPS
+        return 500; // 2 FPS default (explore/community)
+      })();
+      return Math.round(base * throttle);
     };
 
     const interval = getInterval();
-    console.log(`[LiveSight] Video stream: ${(1000 / interval).toFixed(1)} FPS (${this.activeFeature}, custom=${this.settings.customFps})`);
+    console.log(`[LiveSight] Video stream: ${(1000 / interval).toFixed(1)} FPS (${this.activeFeature}, custom=${this.settings.customFps}, throttle: ${this.rateLimitThrottle || 1}x)`);
 
     this.videoInterval = setInterval(() => {
       this.sendRealtimeInput();

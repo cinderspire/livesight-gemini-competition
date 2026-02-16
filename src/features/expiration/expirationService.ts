@@ -11,15 +11,15 @@ function parseExpirationDate(dateStr: string): Date | null {
   // Common date formats to try
   const formats = [
     // MM/DD/YYYY, MM-DD-YYYY
-    /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/,
+    /(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})/,
     // YYYY/MM/DD, YYYY-MM-DD
-    /(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/,
+    /(\d{4})[/-](\d{1,2})[/-](\d{1,2})/,
     // DD MMM YYYY, DD MMMM YYYY (Turkish + English)
     /(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Ocak|Şubat|Mart|Nisan|Mayıs|Haziran|Temmuz|Ağustos|Eylül|Ekim|Kasım|Aralık)[a-z]*\s+(\d{2,4})/i,
     // MMM DD YYYY
     /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Ocak|Şubat|Mart|Nisan|Mayıs|Haziran|Temmuz|Ağustos|Eylül|Ekim|Kasım|Aralık)[a-z]*\s+(\d{1,2}),?\s+(\d{2,4})/i,
     // Best by: or Exp: followed by date (including Turkish idioms)
-    /(?:best\s*by|exp(?:iry)?|use\s*by|son\s*kullanma|skt|tett)[:\s]*(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/i,
+    /(?:best\s*by|exp(?:iry)?|use\s*by|son\s*kullanma|skt|tett)[:\s]*(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})/i,
   ];
 
   for (const format of formats) {
@@ -93,8 +93,8 @@ export function parseExpirationResponse(response: string): ExpirationDateResult 
   const datePatterns = [
     /(?:expir(?:ation|es?|y)|best\s*by|use\s*by|son\s*kullanma|skt|tett|tarih)[:\s]*([^,.\n]+)/i,
     /date[:\s]*([^,.\n]+)/i,
-    /(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/,
-    /(\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2})/,
+    /(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})/,
+    /(\d{4}[/-]\d{1,2}[/-]\d{1,2})/,
   ];
 
   for (const pattern of datePatterns) {

@@ -83,7 +83,7 @@ const LiveSightApp: React.FC = () => {
       if (demoParam) return `/demo/${demoParam}`;
       const stored = localStorage.getItem('livesight_demo');
       if (stored) return `/demo/${stored}`;
-    } catch {}
+    } catch { /* empty */ }
     return undefined;
   });
 
@@ -670,10 +670,9 @@ const LiveSightApp: React.FC = () => {
     setToastMessage(null);
   }, []);
 
-
   // Background class based on contrast mode
   const bgClass = useMemo(() => {
-    return settings.contrastMode === 'high' ? 'bg-[#09090b]' : 'bg-[#0a0a0f]';
+    return settings.contrastMode === 'high' ? 'bg-transparent' : 'bg-transparent';
   }, [settings.contrastMode]);
 
   // Status indicator class

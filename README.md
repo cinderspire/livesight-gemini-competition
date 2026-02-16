@@ -19,7 +19,7 @@
 
 <br/>
 
-[🎬 Watch Demo](#-demo) · [🚀 Quick Start](#-quick-start) · [✨ Features](#-features) · [🏗️ Architecture](#%EF%B8%8F-architecture) · [🏆 Hackathon](#-hackathon-submission)
+🎬 Watch Demo- (#-demo) · [🚀 Quick Start](#-quick-start) · [✨ Features](#-features) · [🏗️ Architecture](#%EF%B8%8F-architecture) · [🏆 Hackathon](#-hackathon-submission)
 
 <br/>
 
@@ -69,7 +69,7 @@ Current solutions are expensive ($3,000+ for smart canes), limited in scope, or 
 
 </div>
 
-> 📺 **[Watch Full Demo on YouTube →](#)** *(link coming soon)*
+> 📺 **[Watch Full Demo on YouTube →](https://youtube.com/shorts/t-8CzLcFolU)**
 
 ---
 

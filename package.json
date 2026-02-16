@@ -1,7 +1,7 @@
 {
   "name": "livesight",
   "private": true,
-  "version": "2.0.0",
+  "version": "2.1.0",
   "type": "module",
   "description": "See Beyond Barriers - AI-powered navigation assistant empowering visually impaired users to explore the world with confidence",
   "author": "LiveSight Team",

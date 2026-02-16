@@ -1,50 +1,90 @@
 <div align="center">
 
-# 👁️ LiveSight
+# LiveSight
 
-### *See the World Through Sound*
+### *Free for All. Built for Good.*
 
-**AI-powered real-time navigation for visually impaired people — built with Google Gemini**
+**A social purpose project: AI-powered real-time navigation for visually impaired people**
 
-[![Gemini API](https://img.shields.io/badge/Powered%20by-Google%20Gemini-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev)
+[![Gemini API](https://img.shields.io/badge/Powered%20by-Google%20Gemini%202.0%20Flash-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev)
 [![Hackathon](https://img.shields.io/badge/Google%20AI-Hackathon%202026-EA4335?style=for-the-badge&logo=google&logoColor=white)](https://googleai.devpost.com)
-[![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
 [![Capacitor](https://img.shields.io/badge/Capacitor-8-119EFF?style=for-the-badge&logo=capacitor&logoColor=white)](https://capacitorjs.com)
-[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+[![Free Forever](https://img.shields.io/badge/Cost-Free%20Forever-00C853?style=for-the-badge)](#-usage-terms--free-for-all-built-for-good)
 
 <br/>
 
-> 🌍 **285 million** people worldwide live with visual impairments.  
-> LiveSight gives them **eyes that speak.**
+> **285 million** people worldwide live with visual impairments.
+> LiveSight exists for one reason: **to give them eyes that speak.**
 
 <br/>
 
-🎬 Watch Demo- (#-demo) · [🚀 Quick Start](#-quick-start) · [✨ Features](#-features) · [🏗️ Architecture](#%EF%B8%8F-architecture) · [🏆 Hackathon](#-hackathon-submission)
+[Try LiveSight in Your Browser](#-web-version) | [Watch Demo](#-demo) | [Quick Start](#-quick-start) | [Features](#-features) | [Architecture](#-architecture) | [Hackathon](#-hackathon-submission)
 
 <br/>
 
-<img src="https://img.shields.io/badge/Status-Live-00C853?style=flat-square" /> <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20Android%20%7C%20Web-blueviolet?style=flat-square" /> <img src="https://img.shields.io/badge/AI%20Model-Gemini%203%20Pro-FF6F00?style=flat-square" />
+<img src="https://img.shields.io/badge/Status-Live-00C853?style=flat-square" /> <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20Android%20%7C%20Web-blueviolet?style=flat-square" /> <img src="https://img.shields.io/badge/AI%20Model-Gemini%202.0%20Flash-FF6F00?style=flat-square" />
 
 </div>
 
 ---
 
-## 🎯 The Problem
+## Our Mission
+
+LiveSight is a **social purpose project**. It was not built to make money. It was built because navigating the world without sight is dangerous, exhausting, and unnecessarily difficult -- and because a smartphone and modern AI can change that.
+
+Current assistive devices cost $3,000 or more for smart canes, are limited in what they can detect, or require constant human help. LiveSight takes a different approach: **turn the phone someone already carries into an intelligent seeing companion.** No special hardware. No subscription. No cost. Just open the app and go.
+
+Every design decision in LiveSight starts with one question: *does this help a visually impaired person move through the world more safely and independently?*
+
+---
+
+## Usage Terms -- Free for All, Built for Good
+
+LiveSight is released under a simple, human-friendly principle:
+
+- **FREE** to use, forever, for any purpose.
+- **OPEN** for anyone to study, modify, fork, and redistribute.
+- **WELCOME** in personal projects, research, nonprofits, education, government work, and community initiatives.
+- **ONE CONDITION**: No person or organization other than the original creators ([cinderspire](https://github.com/cinderspire)) may monetize LiveSight commercially. You may not sell it, wrap it in a paid product, or charge users for access to it. LiveSight was built as a public good and must remain one.
+
+If you want to build on top of LiveSight to help people, you are encouraged to do so. If you want to profit from it, please reach out to the creators first.
+
+> The formal license text is in [LICENSE](LICENSE). This section describes the spirit of the project.
+
+---
+
+## Web Version
+
+You can use LiveSight directly in your browser without installing anything:
+
+**[https://cinderspire.github.io/livesight-gemini-competition/](https://cinderspire.github.io/livesight-gemini-competition/)**
+
+The web version provides the full LiveSight experience -- real-time camera analysis, voice guidance, traffic light detection, and all navigation modes -- right from your phone or desktop browser. No app store required. Just open the link, allow camera access, enter your Gemini API key, and go.
+
+This is especially useful for:
+- Trying LiveSight before installing the mobile app
+- Using LiveSight on devices where you cannot install apps
+- Sharing LiveSight with someone who needs it immediately
+
+---
+
+## The Problem
 
 Every day, visually impaired people face life-threatening challenges:
 
-- 🚗 **Vehicles** they can't see approaching
-- 🚦 **Traffic lights** they can't read
-- 🚧 **Obstacles** on sidewalks they can't detect
-- 🗺️ **Navigation** without visual landmarks
+- **Vehicles** they cannot see approaching
+- **Traffic lights** they cannot read
+- **Obstacles** on sidewalks they cannot detect
+- **Navigation** without visual landmarks
 
-Current solutions are expensive ($3,000+ for smart canes), limited in scope, or require constant human assistance.
+These are not inconveniences. They are barriers to independence, safety, and dignity.
 
-## 💡 The Solution
+## The Solution
 
 **LiveSight** turns any smartphone into an intelligent navigation companion that:
 
-1. **Sees** through the phone camera using Gemini Vision AI
+1. **Sees** through the phone camera using Gemini 2.0 Flash Vision AI
 2. **Understands** the environment in real-time
 3. **Speaks** clear, actionable guidance to the user
 4. **Adapts** to different scenarios automatically
@@ -53,7 +93,7 @@ Current solutions are expensive ($3,000+ for smart canes), limited in scope, or 
 
 ---
 
-## 🎬 Demo
+## Demo
 
 <div align="center">
 
@@ -61,51 +101,51 @@ Current solutions are expensive ($3,000+ for smart canes), limited in scope, or 
 
 | Scenario | Description | What LiveSight Does |
 |:--------:|:------------|:-------------------|
-| 🏙️ **Obstacle Detection** | Walking on NYC sidewalk | Detects parked cars, tree pits, stop signs |
-| 🚦 **Traffic Light** | Approaching a crosswalk | Reads pedestrian signals, guides safe crossing |
-| 🚶 **Crowd Navigation** | Busy Tokyo intersection | Counts pedestrians, finds clear path |
-| ⚠️ **Danger Alert** | Narrow sidewalk with vehicles | Warns about blocked paths, checks before crossing |
-| 🔍 **Explore Mode** | Shopping district | Identifies nearby restaurants, shops, transit stops |
+| **Obstacle Detection** | Walking on NYC sidewalk | Detects parked cars, tree pits, stop signs |
+| **Traffic Light** | Approaching a crosswalk | Reads pedestrian signals, guides safe crossing |
+| **Crowd Navigation** | Busy Tokyo intersection | Counts pedestrians, finds clear path |
+| **Danger Alert** | Narrow sidewalk with vehicles | Warns about blocked paths, checks before crossing |
+| **Explore Mode** | Shopping district | Identifies nearby restaurants, shops, transit stops |
 
 </div>
 
-> 📺 **[Watch Full Demo on YouTube →](https://youtube.com/shorts/t-8CzLcFolU)**
+> **[Watch Full Demo on YouTube](https://youtube.com/shorts/t-8CzLcFolU)**
 
 ---
 
-## ✨ Features
+## Features
 
-### 🧠 AI-Powered Vision (Gemini 3 Pro)
+### AI-Powered Vision (Gemini 2.0 Flash)
 - **Real-time scene analysis** at 2-4 FPS
-- Object detection & classification
+- Object detection and classification
 - Text recognition (signs, menus, labels)
-- Spatial awareness & distance estimation
+- Spatial awareness and distance estimation
 
-### 🚦 Traffic Light Detection
+### Traffic Light Detection
 - Red / Yellow / Green state recognition
 - Pedestrian signal detection
 - Countdown timer estimation
 - Safe crossing guidance
 
-### 🗺️ Smart Navigation
+### Smart Navigation
 - Turn-by-turn voice directions
 - Obstacle avoidance routing
 - Landmark-based orientation
 - Indoor/outdoor seamless transition
 
-### 🔍 Explore Mode
+### Explore Mode
 - Nearby place discovery
-- Restaurant & shop identification
+- Restaurant and shop identification
 - Public transit information
 - Points of interest description
 
-### 🚨 Danger Detection
+### Danger Detection
 - Fast-approaching vehicle alerts
 - Construction zone warnings
 - Uneven surface detection
 - Fall risk assessment with auto-emergency call
 
-### ♿ Accessibility-First Design
+### Accessibility-First Design
 - **100% voice-controlled** interface
 - High-contrast UI with large touch targets
 - Haptic feedback for alerts
@@ -114,47 +154,47 @@ Current solutions are expensive ($3,000+ for smart canes), limited in scope, or 
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
-┌─────────────────────────────────────────────┐
-│                 LiveSight App                │
-├─────────────────────────────────────────────┤
-│                                             │
-│  📷 Camera Feed ──→ 🧠 Gemini Vision AI    │
-│       │                    │                │
-│       │              Scene Analysis         │
-│       │              Object Detection       │
-│       │              Text Recognition       │
-│       │                    │                │
-│       ▼                    ▼                │
-│  🖥️ HUD Overlay    🔊 TTS Engine           │
-│  - Traffic state    - Voice guidance        │
-│  - Danger alerts    - Spatial audio         │
-│  - Navigation       - Priority alerts       │
-│  - Explore info     - Natural language      │
-│                                             │
-├─────────────────────────────────────────────┤
-│  📱 Capacitor (iOS + Android + Web)         │
-│  ⚛️  React 18 + TypeScript + TailwindCSS    │
-│  🔋 Battery-optimized with adaptive FPS     │
-└─────────────────────────────────────────────┘
++---------------------------------------------+
+|                 LiveSight App                |
++---------------------------------------------+
+|                                             |
+|  Camera Feed --> Gemini 2.0 Flash Vision AI |
+|       |                    |                |
+|       |              Scene Analysis         |
+|       |              Object Detection       |
+|       |              Text Recognition       |
+|       |                    |                |
+|       v                    v                |
+|  HUD Overlay         TTS Engine             |
+|  - Traffic state    - Voice guidance        |
+|  - Danger alerts    - Spatial audio         |
+|  - Navigation       - Priority alerts       |
+|  - Explore info     - Natural language      |
+|                                             |
++---------------------------------------------+
+|  Capacitor (iOS + Android + Web)            |
+|  React 19 + TypeScript + TailwindCSS        |
+|  Battery-optimized with adaptive FPS        |
++---------------------------------------------+
 ```
 
 ### Tech Stack
 
 | Layer | Technology |
 |:------|:-----------|
-| **AI Engine** | Google Gemini 3 Pro Vision API |
-| **Frontend** | React 18 + TypeScript + TailwindCSS |
-| **Mobile** | Capacitor 8 (iOS & Android) |
+| **AI Engine** | Google Gemini 2.0 Flash Vision API |
+| **Frontend** | React 19 + TypeScript + TailwindCSS |
+| **Mobile** | Capacitor 8 (iOS and Android) |
 | **Build** | Vite 6 |
 | **TTS** | Web Speech API + native fallback |
 | **Sensors** | Camera, Accelerometer, Geolocation, Compass |
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Node.js 18+
@@ -200,52 +240,52 @@ Try LiveSight without an API key:
 
 ---
 
-## 📊 Impact
+## Impact
 
 <div align="center">
 
 | Metric | Value |
 |:-------|:------|
-| 🌍 Potential users | **285 million** visually impaired people worldwide |
-| 💰 Cost | **$0** — uses existing smartphone |
-| ⚡ Response time | **< 2 seconds** scene-to-speech |
-| 🔋 Battery usage | **< 15%/hour** with adaptive FPS |
-| 🌐 Languages | English (expandable via Gemini) |
-| 📱 Platforms | iOS, Android, Web |
+| Potential users | **285 million** visually impaired people worldwide |
+| Cost | **$0** -- uses existing smartphone |
+| Response time | **< 2 seconds** scene-to-speech |
+| Battery usage | **< 15%/hour** with adaptive FPS |
+| Languages | English (expandable via Gemini) |
+| Platforms | iOS, Android, Web |
 
 </div>
 
 ---
 
-## 🏆 Hackathon Submission
+## Hackathon Submission
 
 ### Google AI Hackathon 2026
 
 **LiveSight** is our submission for the Google AI Hackathon, competing in multiple categories:
 
-- 🥇 **Most Potential for Community Impact** — Empowering 285M visually impaired people
-- 🏅 **Most Creative & Original** — Turning any phone into an AI seeing companion
-- 🔧 **Most Impressive Technical Implementation** — Real-time vision + spatial audio + multi-sensor fusion
-- 🤝 **Best Use of Responsible AI** — Accessibility-first, privacy-respecting, life-saving technology
+- **Most Potential for Community Impact** -- Empowering 285M visually impaired people
+- **Most Creative and Original** -- Turning any phone into an AI seeing companion
+- **Most Impressive Technical Implementation** -- Real-time vision + spatial audio + multi-sensor fusion
+- **Best Use of Responsible AI** -- Accessibility-first, privacy-respecting, life-saving technology
 
 ### Why LiveSight Matters
 
-> *"The best technology is the one that disappears. LiveSight doesn't ask users to learn a new device — it transforms the phone they already carry into eyes that speak."*
+> *"The best technology is the one that disappears. LiveSight doesn't ask users to learn a new device -- it transforms the phone they already carry into eyes that speak."*
 
 ### Gemini API Usage
 
-- **Gemini 3 Pro Vision** — Real-time camera frame analysis
-- **Multi-modal understanding** — Combines visual + spatial + contextual data
-- **Streaming responses** — Low-latency scene descriptions
-- **Safety filters** — Responsible AI for vulnerable users
+- **Gemini 2.0 Flash Vision** -- Real-time camera frame analysis
+- **Multi-modal understanding** -- Combines visual + spatial + contextual data
+- **Streaming responses** -- Low-latency scene descriptions
+- **Safety filters** -- Responsible AI for vulnerable users
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
 - [x] Real-time camera analysis with Gemini Vision
-- [x] Traffic light detection & crossing guidance
-- [x] Obstacle detection & avoidance
+- [x] Traffic light detection and crossing guidance
+- [x] Obstacle detection and avoidance
 - [x] Explore mode for nearby places
 - [x] Danger/vehicle alert system
 - [x] Fall detection with emergency response
@@ -257,36 +297,36 @@ Try LiveSight without an API key:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
-We welcome contributions! Whether it's:
+LiveSight is a social purpose project and contributions are welcome. Whether it is:
 
-- 🐛 Bug reports
-- ✨ Feature requests
-- 🌍 Translations
-- ♿ Accessibility improvements
-- 📖 Documentation
+- Bug reports
+- Feature requests
+- Translations
+- Accessibility improvements
+- Documentation
 
-Please open an issue or submit a PR.
+Please open an issue or submit a PR. Every improvement makes the world a little more navigable for someone who needs it.
 
 ---
 
-## 📄 License
+## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+See [LICENSE](LICENSE) for the formal license text. The spirit of this project is described in [Usage Terms](#-usage-terms--free-for-all-built-for-good) above: free for everyone, built for good, not for commercial profit by anyone other than the original creators.
 
 ---
 
 <div align="center">
 
-### Built with ❤️ and AI
-
-**LiveSight** by [cinderspire](https://github.com/cinderspire) · [playtools.top](https://playtools.top)
+### Built with purpose by [cinderspire](https://github.com/cinderspire)
 
 *Empowering independence through intelligent vision*
 
+**LiveSight is and always will be free.**
+
 <br/>
 
-[![Google Gemini](https://img.shields.io/badge/Built%20with-Google%20Gemini-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev)
+[![Google Gemini](https://img.shields.io/badge/Built%20with-Google%20Gemini%202.0%20Flash-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev)
 
 </div>

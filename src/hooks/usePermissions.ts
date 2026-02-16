@@ -11,7 +11,7 @@ export interface PermissionStatus {
   checking: boolean;
 }
 
-export function usePermissions() {
+export function usePermissions(enabled = true) {
   const [permissions, setPermissions] = useState<PermissionStatus>({
     camera: false,
     microphone: false,
@@ -140,8 +140,10 @@ export function usePermissions() {
   }, [isNative]);
 
   useEffect(() => {
-    checkPermissions();
-  }, [checkPermissions]);
+    if (enabled) {
+      checkPermissions();
+    }
+  }, [enabled, checkPermissions]);
 
   return { permissions, requestPermissions, checkPermissions, isNative };
 }

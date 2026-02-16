@@ -105,11 +105,13 @@ const LiveSightApp: React.FC = () => {
     vehicleAwareness,
     fallDetected: fallHaptic,
   } = useHaptic();
-  const { permissions, requestPermissions } = usePermissions();
-  // Request all permissions immediately on mount
+  const { permissions, requestPermissions } = usePermissions(!!apiKey);
+  // Request permissions only after API key is set (not during Onboarding)
   useEffect(() => {
-    requestPermissions();
-  }, [requestPermissions]);
+    if (apiKey) {
+      requestPermissions();
+    }
+  }, [apiKey, requestPermissions]);
   const {
     startMonitoring: startFallMonitoring,
     stopMonitoring: stopFallMonitoring,

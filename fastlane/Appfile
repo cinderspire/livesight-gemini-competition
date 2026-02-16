@@ -1,5 +1,4 @@
 app_identifier("com.livesight.app")
 apple_id("cinderspire@gmail.com")
 
-itc_team_id(ENV["ITC_TEAM_ID"]) # App Store Connect Team ID (set after first run)
-team_id(ENV["TEAM_ID"]) # Developer Portal Team ID (set after first run)
+team_id("QXRFKTH3GU") # Developer Portal Team ID

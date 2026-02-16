@@ -9,7 +9,9 @@ XCODEPROJ = "./ios/App/App.xcodeproj"
 XCWORKSPACE = "./ios/App/App.xcworkspace"
 SCHEME = "App"
 APP_IDENTIFIER = "com.livesight.app"
-APP_NAME = "LiveSight"
+APP_NAME = "LiveSight - AI Navigation"
+API_KEY_PATH = "./fastlane/api_key.json"
+TEAM_ID = "QXRFKTH3GU"
 
 platform :ios do
 
@@ -19,7 +21,7 @@ platform :ios do
     create_app_online(
       app_identifier: APP_IDENTIFIER,
       app_name: APP_NAME,
-      language: "English",
+      language: "en-US",
       app_version: "2.1.0",
       sku: "com.livesight.app.2024",
       platforms: ["ios"],
@@ -62,14 +64,18 @@ platform :ios do
       configuration: "Release",
       export_method: "app-store",
       export_options: {
+        teamID: TEAM_ID,
+        signingStyle: "manual",
+        signingCertificate: "Apple Distribution",
         provisioningProfiles: {
-          APP_IDENTIFIER => ENV["PROVISIONING_PROFILE_NAME"] || "LiveSight AppStore",
+          APP_IDENTIFIER => "com.livesight.app AppStore",
         },
       },
       output_directory: "./build",
       output_name: "LiveSight.ipa",
       clean: true,
       include_bitcode: false,
+      xcargs: "DEVELOPMENT_TEAM=#{TEAM_ID}",
     )
     UI.success("IPA built successfully!")
   end
@@ -77,10 +83,7 @@ platform :ios do
   # ─── 4. SCREENSHOTS ───
   desc "Capture screenshots for App Store"
   lane :screenshots do
-    # iPhone 16 Pro (6.9")
     sh('xcrun simctl io booted screenshot ./fastlane/screenshots/en-US/iPhone_6.9_1.png 2>/dev/null || true')
-
-    # iPad Pro 13" (2064x2752)
     sh('xcrun simctl list devices booted | head -5')
 
     UI.important("Screenshots should be captured manually from simulators:")
@@ -95,6 +98,7 @@ platform :ios do
   desc "Upload metadata, screenshots, and description to App Store Connect"
   lane :metadata do
     deliver(
+      api_key_path: API_KEY_PATH,
       app_identifier: APP_IDENTIFIER,
       skip_binary_upload: true,
       skip_screenshots: false,
@@ -117,6 +121,7 @@ platform :ios do
     certs
     build
     deliver(
+      api_key_path: API_KEY_PATH,
       app_identifier: APP_IDENTIFIER,
       ipa: "./build/LiveSight.ipa",
       force: true,
@@ -142,6 +147,7 @@ platform :ios do
     certs
     build
     upload_to_testflight(
+      api_key_path: API_KEY_PATH,
       ipa: "./build/LiveSight.ipa",
       skip_waiting_for_build_processing: true,
       changelog: "LiveSight v2.1.0 - Complete renovation with new onboarding, custom FPS, and improved AI.",

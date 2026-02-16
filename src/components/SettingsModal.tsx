@@ -1,5 +1,7 @@
 import React, { useState, useCallback, memo } from 'react';
 import { useLiveSight } from '../contexts/LiveSightContext';
+import { validateApiKey, maskApiKey, clearApiKey } from '../utils/apiKeyUtils';
+import { FREE_TIER_INFO } from '../constants';
 import type { SettingsModalProps, MobilityAid, VoiceSpeed, VoiceType, Language, ContrastMode } from '../types';
 
 const MOBILITY_OPTIONS: MobilityAid[] = ['none', 'cane', 'guide_dog', 'wheelchair'];
@@ -16,15 +18,21 @@ const LANGUAGE_OPTIONS: { value: Language; label: string }[] = [
   { value: 'ja', label: '日本語' },
 ];
 
-type SettingsTab = 'general' | 'voice' | 'safety' | 'advanced';
+type SettingsTab = 'general' | 'voice' | 'safety' | 'advanced' | 'api';
 
 /**
  * Settings Modal Component
  * Comprehensive settings for all app features
  */
-const SettingsModal: React.FC<SettingsModalProps> = memo(({ isOpen, onClose }) => {
+const SettingsModal: React.FC<SettingsModalProps> = memo(({ isOpen, onClose, apiKey, onApiKeyChange }) => {
   const { settings, updateSettings, emergencyContacts } = useLiveSight();
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
+
+  // API tab state
+  const [showKeyInput, setShowKeyInput] = useState(false);
+  const [newKeyInput, setNewKeyInput] = useState('');
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationResult, setValidationResult] = useState<string | null>(null);
 
   // Toggle handlers
   const handleToggle = useCallback((key: keyof typeof settings) => {
@@ -43,6 +51,35 @@ const SettingsModal: React.FC<SettingsModalProps> = memo(({ isOpen, onClose }) =
     }
   }, [onClose]);
 
+  const handleTestKey = useCallback(async () => {
+    const keyToTest = showKeyInput ? newKeyInput : apiKey;
+    if (!keyToTest || keyToTest.length < 10) return;
+
+    setIsValidating(true);
+    setValidationResult(null);
+    const result = await validateApiKey(keyToTest);
+    setIsValidating(false);
+    setValidationResult(result.valid ? 'valid' : result.error || 'Invalid');
+  }, [apiKey, newKeyInput, showKeyInput]);
+
+  const handleSaveNewKey = useCallback(() => {
+    if (newKeyInput.length >= 10 && onApiKeyChange) {
+      onApiKeyChange(newKeyInput);
+      setShowKeyInput(false);
+      setNewKeyInput('');
+      setValidationResult(null);
+    }
+  }, [newKeyInput, onApiKeyChange]);
+
+  const handleClearKey = useCallback(() => {
+    if (onApiKeyChange) {
+      onApiKeyChange('');
+      clearApiKey();
+      setShowKeyInput(false);
+      setNewKeyInput('');
+    }
+  }, [onApiKeyChange]);
+
   if (!isOpen) return null;
 
   const tabs: { id: SettingsTab; label: string; icon: string }[] = [
@@ -50,6 +87,7 @@ const SettingsModal: React.FC<SettingsModalProps> = memo(({ isOpen, onClose }) =
     { id: 'voice', label: 'Voice', icon: '🔊' },
     { id: 'safety', label: 'Safety', icon: '🛡️' },
     { id: 'advanced', label: 'Advanced', icon: '🔧' },
+    { id: 'api', label: 'API', icon: '🔑' },
   ];
 
   return (
@@ -89,12 +127,12 @@ const SettingsModal: React.FC<SettingsModalProps> = memo(({ isOpen, onClose }) =
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-800 bg-gray-900/20 flex-shrink-0">
+        <div className="flex border-b border-gray-800 bg-gray-900/20 flex-shrink-0 overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-3 text-xs font-bold transition-all ${
+              className={`flex-1 py-3 text-xs font-bold transition-all whitespace-nowrap min-w-0 ${
                 activeTab === tab.id
                   ? 'text-cyan-400 border-b-2 border-cyan-400 bg-cyan-500/5'
                   : 'text-gray-500 hover:text-gray-300'
@@ -241,8 +279,6 @@ const SettingsModal: React.FC<SettingsModalProps> = memo(({ isOpen, onClose }) =
                   ))}
                 </div>
               </fieldset>
-
-              {/* Note: Spatial Audio removed - not yet implemented */}
             </>
           )}
 
@@ -326,6 +362,37 @@ const SettingsModal: React.FC<SettingsModalProps> = memo(({ isOpen, onClose }) =
                 )}
               </div>
 
+              {/* Camera Frame Rate (FPS) */}
+              <div className="space-y-3">
+                <ToggleSwitch
+                  label="Ozel FPS Kullan"
+                  description="Kamera kare hizini manuel ayarla"
+                  checked={settings.customFps > 0}
+                  onChange={() => updateSettings({ customFps: settings.customFps > 0 ? 0 : 4 })}
+                />
+
+                {settings.customFps > 0 && (
+                  <div className="pl-4 space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label htmlFor="fps-slider" className="text-[10px] text-gray-500 uppercase">Kare Hizi</label>
+                      <span className="text-xs text-cyan-400 font-mono">{settings.customFps} FPS</span>
+                    </div>
+                    <input
+                      id="fps-slider"
+                      type="range"
+                      min={1}
+                      max={10}
+                      step={1}
+                      value={settings.customFps}
+                      onChange={(e) => updateSettings({ customFps: Number(e.target.value) })}
+                      className="w-full accent-cyan-500"
+                      aria-label={`Frame rate: ${settings.customFps} FPS`}
+                    />
+                    <p className="text-[10px] text-gray-600">Yuksek FPS daha fazla API kotasi kullanir</p>
+                  </div>
+                )}
+              </div>
+
               {/* App Info */}
               <div className="p-4 bg-gray-900/50 rounded-xl border border-gray-800 space-y-2">
                 <div className="flex justify-between text-xs">
@@ -338,8 +405,118 @@ const SettingsModal: React.FC<SettingsModalProps> = memo(({ isOpen, onClose }) =
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-500">Model</span>
-                  <span className="text-gray-300 font-mono">Gemini 3 Flash</span>
+                  <span className="text-gray-300 font-mono">Gemini 2.0 Flash</span>
                 </div>
+              </div>
+            </>
+          )}
+
+          {/* API Tab */}
+          {activeTab === 'api' && (
+            <>
+              {/* Current API Key */}
+              <div className="p-4 bg-gray-900/50 rounded-xl border border-gray-800 space-y-3">
+                <div className="text-[10px] font-mono text-cyan-500 uppercase tracking-widest font-bold">
+                  API Key
+                </div>
+                {apiKey ? (
+                  <div className="text-sm text-gray-300 font-mono bg-black/50 px-3 py-2 rounded-lg">
+                    {maskApiKey(apiKey)}
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-500 italic">Henuz key ayarlanmadi</div>
+                )}
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleTestKey}
+                    disabled={!apiKey || isValidating}
+                    className="flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg border border-gray-700 bg-gray-800/50 text-gray-400 hover:text-cyan-400 hover:border-cyan-500/50 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {isValidating ? 'Test...' : 'Test Et'}
+                  </button>
+                  <button
+                    onClick={() => { setShowKeyInput(!showKeyInput); setValidationResult(null); }}
+                    className="flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg border border-gray-700 bg-gray-800/50 text-gray-400 hover:text-sky-400 hover:border-sky-500/50 transition"
+                  >
+                    Degistir
+                  </button>
+                  <button
+                    onClick={handleClearKey}
+                    disabled={!apiKey}
+                    className="py-2 px-3 text-xs font-bold uppercase tracking-wider rounded-lg border border-gray-700 bg-gray-800/50 text-gray-400 hover:text-red-400 hover:border-red-500/50 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Sil
+                  </button>
+                </div>
+
+                {validationResult && (
+                  <div className={`text-xs text-center ${validationResult === 'valid' ? 'text-emerald-400' : 'text-red-400'}`} role="status">
+                    {validationResult === 'valid' ? 'API key gecerli!' : validationResult}
+                  </div>
+                )}
+              </div>
+
+              {/* Change Key Input */}
+              {showKeyInput && (
+                <div className="p-4 bg-gray-900/50 rounded-xl border border-gray-800 space-y-3 animate-fade-in-up">
+                  <input
+                    type="password"
+                    placeholder="Yeni API Key"
+                    value={newKeyInput}
+                    onChange={(e) => setNewKeyInput(e.target.value)}
+                    className="w-full bg-black/50 border border-gray-700 p-3 rounded-lg text-sm text-sky-300 focus:border-sky-500/50 outline-none transition-all placeholder:text-gray-600"
+                    aria-label="New API key input"
+                  />
+                  <button
+                    onClick={handleSaveNewKey}
+                    disabled={newKeyInput.length < 10}
+                    className="w-full py-2 text-xs font-bold uppercase tracking-wider rounded-lg bg-cyan-600 hover:bg-cyan-500 text-black transition disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Kaydet
+                  </button>
+                </div>
+              )}
+
+              {/* Free Tier Info */}
+              <div className="p-4 bg-gray-900/50 rounded-xl border border-gray-800 space-y-3">
+                <div className="text-[10px] font-mono text-emerald-400 uppercase tracking-widest font-bold">
+                  Ucretsiz Plan - {FREE_TIER_INFO.MODEL}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="p-2 bg-black/30 rounded-lg">
+                    <div className="text-xs text-gray-500">RPM</div>
+                    <div className="text-sm text-white font-mono">{FREE_TIER_INFO.RPM}</div>
+                  </div>
+                  <div className="p-2 bg-black/30 rounded-lg">
+                    <div className="text-xs text-gray-500">RPD</div>
+                    <div className="text-sm text-white font-mono">{FREE_TIER_INFO.RPD.toLocaleString()}</div>
+                  </div>
+                  <div className="p-2 bg-black/30 rounded-lg">
+                    <div className="text-xs text-gray-500">TPM</div>
+                    <div className="text-sm text-white font-mono">{(FREE_TIER_INFO.TPM / 1000).toFixed(0)}K</div>
+                  </div>
+                  <div className="p-2 bg-black/30 rounded-lg">
+                    <div className="text-xs text-gray-500">Daily Tokens</div>
+                    <div className="text-sm text-white font-mono">{(FREE_TIER_INFO.TOKENS_PER_DAY / 1000000).toFixed(0)}M</div>
+                  </div>
+                </div>
+                <ul className="space-y-1">
+                  {FREE_TIER_INFO.NOTES.map((note, i) => (
+                    <li key={i} className="text-[10px] text-gray-500 flex items-center gap-1.5">
+                      <span className="text-emerald-400">&#10003;</span>
+                      {note}
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  href={FREE_TIER_INFO.AISTUDIO_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-center text-xs text-sky-400 hover:text-sky-300 underline"
+                >
+                  AI Studio'da Key Olustur
+                </a>
               </div>
             </>
           )}

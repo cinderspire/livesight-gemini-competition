@@ -66,6 +66,19 @@ const FUNCTION_DECLARATIONS: FunctionDeclaration[] = [
       required: ['description', 'safetyLevel'],
     },
   },
+  {
+    name: 'detectText',
+    description: 'Extract and read visible text from the scene (signs, labels, product names)',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        text: { type: Type.STRING, description: 'The detected text content' },
+        location: { type: Type.STRING, description: 'Where in the scene: center, top-left, top-right, bottom-left, bottom-right' },
+        importance: { type: Type.STRING, description: 'Relevance level: high, medium, low' },
+      },
+      required: ['text', 'importance'],
+    },
+  },
 ];
 
 const LIVE_API_TOOLS = [{ functionDeclarations: FUNCTION_DECLARATIONS }];
@@ -120,6 +133,9 @@ export class LiveSightService {
     this.settings = settings;
     this.callbacks = callbacks;
     this.canvas = document.createElement('canvas');
+    // Set canvas dimensions once in constructor (optimization)
+    this.canvas.width = VIDEO_CONFIG.WIDTH;
+    this.canvas.height = VIDEO_CONFIG.HEIGHT;
   }
 
   /**
@@ -191,7 +207,13 @@ GENERAL RULES:
   public async updateSettings(newSettings: UserSettings): Promise<void> {
     const oldMode = this.settings.proactiveMode;
     const oldSpeed = this.settings.voiceSpeed;
+    const oldFps = this.settings.customFps;
     this.settings = newSettings;
+
+    // Restart video streaming if FPS changed
+    if (oldFps !== newSettings.customFps && this.isConnected) {
+      this.startVideoStreaming();
+    }
 
     if (this.session && this.isConnected) {
       let updateMsg = `SYSTEM_UPDATE: Settings changed.`;
@@ -203,7 +225,6 @@ GENERAL RULES:
         updateMsg += ` Adjust speech speed to ${newSettings.voiceSpeed}.`;
       }
       updateMsg += ` Current Aid: ${newSettings.mobilityAid}.`;
-
 
       this.sendTextMessage(updateMsg);
     }
@@ -309,7 +330,6 @@ GENERAL RULES:
       // Store session reference for use in callbacks
       let sessionRef: Session | null = null;
 
-      const thinkingLevel = AI_CONFIG.THINKING_LEVEL[this.activeFeature] || 'medium';
       const session = await this.ai.live.connect({
         model: AI_CONFIG.MODEL_NAME,
         config: {
@@ -319,9 +339,6 @@ GENERAL RULES:
             voiceConfig: {
               prebuiltVoiceConfig: { voiceName: this.getVoiceName() }
             }
-          },
-          thinkingConfig: {
-            thinkingBudget: thinkingLevel === 'high' ? 2048 : thinkingLevel === 'medium' ? 1024 : 512,
           },
           tools: LIVE_API_TOOLS,
         },
@@ -355,16 +372,19 @@ GENERAL RULES:
       console.error('[LiveSight] Initialization failed:', error);
 
       // Provide user-friendly error messages
-      let errorMessage = 'Connection failed. ';
+      let errorMessage = 'Baglanti basarisiz. ';
       if (error instanceof Error) {
-        if (error.message.includes('API key')) {
-          errorMessage += 'Invalid API key. Please check your Gemini API key.';
-        } else if (error.message.includes('permission')) {
-          errorMessage += 'Microphone permission denied.';
-        } else if (error.message.includes('network') || error.message.includes('fetch')) {
-          errorMessage += 'Network error. Please check your internet connection.';
+        const msg = error.message;
+        if (msg.includes('API key') || msg.includes('401') || msg.includes('403')) {
+          errorMessage = 'API key gecersiz. Ayarlar > API sekmesinden kontrol edin.';
+        } else if (msg.includes('429') || msg.includes('rate') || msg.includes('quota')) {
+          errorMessage = 'Rate limit asildi. Ucretsiz plan limitlerine ulastiniz. Bir kac dakika bekleyin.';
+        } else if (msg.includes('permission')) {
+          errorMessage += 'Mikrofon izni reddedildi.';
+        } else if (msg.includes('network') || msg.includes('fetch')) {
+          errorMessage += 'Internet baglantinizi kontrol edin.';
         } else {
-          errorMessage += error.message;
+          errorMessage += msg;
         }
       }
 
@@ -423,8 +443,9 @@ GENERAL RULES:
 
       // Do NOT reconnect if API key is invalid/leaked
       const reason = _event.reason || '';
-      if (reason.includes('leaked') || reason.includes('API key') || reason.includes('invalid')) {
-        this.callbacks.onTranscript('API key is invalid or disabled. Please generate a new key at aistudio.google.com/apikey', false);
+      const code = _event.code;
+      if (reason.includes('leaked') || reason.includes('API key') || reason.includes('invalid') || code === 1008) {
+        this.callbacks.onTranscript('API key gecersiz veya devre disi. Ayarlar > API sekmesinden yeni key girin.', false);
         this.callbacks.onStatusChange('error');
         this.cleanup();
         return;
@@ -475,7 +496,6 @@ GENERAL RULES:
 
       let sessionRef: Session | null = null;
 
-      const reconnThinkingLevel = AI_CONFIG.THINKING_LEVEL[this.activeFeature] || 'medium';
       const session = await this.ai.live.connect({
         model: AI_CONFIG.MODEL_NAME,
         config: {
@@ -485,9 +505,6 @@ GENERAL RULES:
             voiceConfig: {
               prebuiltVoiceConfig: { voiceName: this.getVoiceName() }
             }
-          },
-          thinkingConfig: {
-            thinkingBudget: reconnThinkingLevel === 'high' ? 2048 : reconnThinkingLevel === 'medium' ? 1024 : 512,
           },
           tools: LIVE_API_TOOLS,
         },
@@ -545,9 +562,17 @@ GENERAL RULES:
     this.clearConnectionTimeout();
     console.error('[LiveSight] Connection error:', error);
 
-    let errorMessage = 'Connection error. ';
-    if (error.message) {
-      errorMessage += error.message;
+    let errorMessage = 'Baglanti hatasi. ';
+    const msg = error.message || '';
+
+    if (msg.includes('401') || msg.includes('403') || msg.includes('API key')) {
+      errorMessage = 'API key gecersiz. Ayarlar > API sekmesinden yeni key girin.';
+    } else if (msg.includes('429') || msg.includes('rate') || msg.includes('quota')) {
+      errorMessage = 'Rate limit asildi. Ucretsiz plan: dakikada 15 istek, gunde 1,500 istek. Bir kac dakika bekleyip tekrar deneyin.';
+    } else if (msg.includes('network') || msg.includes('fetch')) {
+      errorMessage += 'Internet baglantinizi kontrol edin.';
+    } else if (msg) {
+      errorMessage += msg;
     }
 
     this.callbacks.onTranscript(errorMessage, false);
@@ -562,15 +587,20 @@ GENERAL RULES:
     if (this.videoInterval) clearInterval(this.videoInterval);
 
     const getInterval = () => {
-      if (this.activeFeature === 'traffic') return 150;    // ~7 FPS
-      if (this.activeFeature === 'navigation') return 200;  // 5 FPS
-      if (this.activeFeature === 'expiration') return 300;  // ~3 FPS
-      if (this.activeFeature === 'color') return 500;       // 2 FPS
-      return 250; // 4 FPS
+      // If user set a custom FPS, use it
+      if (this.settings.customFps > 0) {
+        return Math.round(1000 / this.settings.customFps);
+      }
+      // Mode-based defaults
+      if (this.activeFeature === 'traffic') return 250;    // 4 FPS
+      if (this.activeFeature === 'navigation') return 333;  // 3 FPS
+      if (this.activeFeature === 'expiration') return 500;  // 2 FPS
+      if (this.activeFeature === 'color') return 1000;      // 1 FPS
+      return 500; // 2 FPS default (explore/community)
     };
 
     const interval = getInterval();
-    console.log(`[LiveSight] Video stream: ${1000 / interval} FPS (${this.activeFeature})`);
+    console.log(`[LiveSight] Video stream: ${(1000 / interval).toFixed(1)} FPS (${this.activeFeature}, custom=${this.settings.customFps})`);
 
     this.videoInterval = setInterval(() => {
       this.sendRealtimeInput();
@@ -585,8 +615,6 @@ GENERAL RULES:
     if (!ctx || !this.isConnected || !session || !this.videoElement || this.videoElement.paused) return;
 
     try {
-      this.canvas.width = VIDEO_CONFIG.WIDTH;
-      this.canvas.height = VIDEO_CONFIG.HEIGHT;
       ctx.drawImage(this.videoElement, 0, 0, this.canvas.width, this.canvas.height);
 
       const dataUrl = this.canvas.toDataURL('image/jpeg', VIDEO_CONFIG.JPEG_QUALITY);
@@ -966,6 +994,20 @@ GENERAL RULES:
           this.callbacks.onHazard(description || 'Dangerous area detected');
         }
         result = { announced: true };
+        break;
+      }
+
+      case 'detectText': {
+        const detectedText = args.text as string;
+        const importance = args.importance as string;
+        if (detectedText) {
+          this.callbacks.onTranscript(detectedText, false);
+          this.addToContext(`[text] ${detectedText}`);
+          if (importance === 'high') {
+            this.callbacks.onHazard(`Sign: ${detectedText}`);
+          }
+        }
+        result = { detected: true, text: detectedText };
         break;
       }
 

@@ -27,6 +27,7 @@ export interface UserSettings {
   autoSOS: boolean;
   batteryAlert: boolean;
   quietHours: { enabled: boolean; start: string; end: string };
+  customFps: number; // 0 = mode-based default
 }
 
 // ============================================
@@ -444,9 +445,26 @@ export interface CameraFeedProps {
   demoVideoUrl?: string;
 }
 
+export interface FreeTierInfo {
+  model: string;
+  rpm: number;
+  rpd: number;
+  tpm: number;
+  description: string;
+}
+
+export interface ApiKeyStatus {
+  isValid: boolean;
+  isLoading: boolean;
+  error: string | null;
+  maskedKey: string;
+}
+
 export interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  apiKey?: string;
+  onApiKeyChange?: (key: string) => void;
 }
 
 export interface AudioVisualizerProps {

@@ -33,7 +33,7 @@ export const VIDEO_CONFIG = {
 // ============================================
 
 export const AI_CONFIG = {
-  MODEL_NAME: 'gemini-3-flash-preview',
+  MODEL_NAME: 'gemini-2.0-flash-live-001',
   VOICE_NAME: 'Kore',
   API_VERSION: 'v1alpha',
   // Gemini Live API voice options mapped to user preference
@@ -41,15 +41,6 @@ export const AI_CONFIG = {
     female: 'Kore',    // Clear female voice
     male: 'Puck',      // Clear male voice
     neutral: 'Aoede',  // Neutral-sounding voice
-  } as Record<string, string>,
-  // Thinking level per feature - Gemini 3 native thinking
-  THINKING_LEVEL: {
-    navigation: 'medium',    // Balance speed & accuracy for real-time nav
-    traffic: 'low',          // Fast response needed for traffic lights
-    expiration: 'medium',    // OCR needs moderate reasoning
-    color: 'low',            // Quick color identification
-    explore: 'high',         // Rich descriptions benefit from deeper thinking
-    community: 'medium',     // Social scene analysis
   } as Record<string, string>,
 } as const;
 
@@ -374,6 +365,23 @@ export const DEFAULT_SETTINGS = {
   autoSOS: false,
   batteryAlert: true,
   quietHours: { enabled: false, start: '22:00', end: '07:00' },
+  customFps: 0,
+} as const;
+
+export const FREE_TIER_INFO = {
+  MODEL: 'Gemini 2.0 Flash',
+  RPM: 15,
+  RPD: 1500,
+  TPM: 250000,
+  TOKENS_PER_DAY: 1000000,
+  NOTES: [
+    'Kredi karti gerektirmez',
+    'Dakikada 15 istek',
+    'Gunde 1,500 istek',
+    'Rate limitler Pasifik gece yarisi sifirlanir',
+  ],
+  AISTUDIO_URL: 'https://aistudio.google.com/apikey',
+  HELP_URL: 'https://ai.google.dev/gemini-api/docs/rate-limits',
 } as const;
 
 export const DEFAULT_WEATHER = {

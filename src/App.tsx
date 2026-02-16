@@ -12,11 +12,15 @@ import {
   EmergencyContactsModal,
   StatusBar,
   FeatureSelector,
+  Onboarding,
+  AdInterstitial,
 } from './components';
 import { useHaptic } from './hooks/useHaptic';
 import { usePermissions } from './hooks/usePermissions';
 import { useFallDetection } from './hooks/useFallDetection';
-import { API_CONFIG, DEFAULT_TRANSCRIPT } from './constants';
+import { DEFAULT_TRANSCRIPT } from './constants';
+import { loadApiKey, saveApiKey } from './utils/apiKeyUtils';
+import * as adService from './services/adService';
 import type { SOSEvent, VehicleDangerLevel, TrafficLightDetection, ColorDetectionResult, ExpirationDateResult } from './types';
 
 // Import feature services
@@ -58,8 +62,14 @@ const LiveSightApp: React.FC = () => {
   const [showEmergencyContacts, setShowEmergencyContacts] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<'info' | 'success' | 'warning' | 'error' | 'achievement'>('info');
-  const [apiKey, setApiKey] = useState<string>('');
-  const [manualKeyInput, setManualKeyInput] = useState('');
+  const [apiKey, setApiKey] = useState<string>(() => loadApiKey());
+  const [showAd, setShowAd] = useState(false);
+  const [isSOS, setIsSOS] = useState(false);
+
+  // Initialize ad service
+  useEffect(() => {
+    adService.initialize();
+  }, []);
 
   // Demo mode: ?demo=video_name.mp4 in URL or localStorage 'livesight_demo'
   // DEMO_MODE: Set to a video filename to enable, undefined to disable
@@ -156,38 +166,10 @@ const LiveSightApp: React.FC = () => {
     }
   }, [location, isLive]);
 
-  // Initialize API Key
-  useEffect(() => {
-    const initKey = async () => {
-      if (process.env.API_KEY) {
-        setApiKey(process.env.API_KEY);
-      } else if (window.aistudio) {
-        try {
-          const hasKey = await window.aistudio.hasSelectedApiKey();
-          if (hasKey && process.env.API_KEY) {
-            setApiKey(process.env.API_KEY);
-          }
-        } catch (error) {
-          console.warn('[App] AI Studio key check failed:', error);
-        }
-      }
-    };
-    initKey();
-  }, []);
-
-  // Handle Google Auth
-  const handleSelectKey = useCallback(async () => {
-    if (window.aistudio) {
-      try {
-        await window.aistudio.openSelectKey();
-        window.location.reload();
-      } catch (e) {
-        console.error('[App] Key selection failed:', e);
-        alert('Connection error. Please try again.');
-      }
-    } else {
-      alert('AI Studio not available. Please use manual API key entry.');
-    }
+  // Handle API key submission from Onboarding
+  const handleApiKeySubmit = useCallback((key: string) => {
+    setApiKey(key);
+    saveApiKey(key);
   }, []);
 
   // Toggle Mute
@@ -202,6 +184,7 @@ const LiveSightApp: React.FC = () => {
 
   // Handle SOS Trigger
   const handleSOSTrigger = useCallback(async (event: SOSEvent) => {
+    setIsSOS(true);
     sosAlert();
     addLog('EMERGENCY SOS TRIGGERED', 'critical');
 
@@ -442,8 +425,7 @@ const LiveSightApp: React.FC = () => {
       return;
     }
 
-    const keyToUse = apiKey || process.env.API_KEY;
-    if (!keyToUse) {
+    if (!apiKey) {
       setTranscript('No API key found. Please enter your Gemini API key.');
       return;
     }
@@ -472,7 +454,7 @@ const LiveSightApp: React.FC = () => {
     setTranscript('Connecting...');
 
     const service = new LiveSightService(
-      keyToUse,
+      apiKey,
       videoElementRef.current,
       settings,
       weather,
@@ -554,7 +536,16 @@ const LiveSightApp: React.FC = () => {
     setVolume(0);
     stopFallMonitoring();
     successFeedback();
-  }, [setStatus, setTranscript, setVolume, successFeedback, stopFallMonitoring]);
+
+    // Show interstitial ad after session stops (not during SOS)
+    if (!isSOS) {
+      adService.showInterstitial().then((shouldShowWeb) => {
+        if (shouldShowWeb && !adService.isNativePlatform()) {
+          setShowAd(true);
+        }
+      });
+    }
+  }, [setStatus, setTranscript, setVolume, successFeedback, stopFallMonitoring, isSOS]);
 
   // Toggle LiveSight
   const toggleLiveSight = useCallback(() => {
@@ -576,8 +567,7 @@ const LiveSightApp: React.FC = () => {
 
   // Auto-start when ALL conditions are met: permissions + video + api key
   useEffect(() => {
-    const keyToUse = apiKey || process.env.API_KEY;
-    if (permissions.allGranted && keyToUse && videoElementRef.current && !isLive && !hasAutoStartedRef.current && !isStartingRef.current) {
+    if (permissions.allGranted && apiKey && videoElementRef.current && !isLive && !hasAutoStartedRef.current && !isStartingRef.current) {
       hasAutoStartedRef.current = true;
       // Small delay to let camera stream stabilize
       const timer = setTimeout(() => {
@@ -588,7 +578,7 @@ const LiveSightApp: React.FC = () => {
   }, [permissions.allGranted, apiKey, isLive]);
 
   // Demo mode: full scenario with reactions, overlays, mode switches + VOICE
-  useEffect(() => {
+  useEffect(() => { // eslint-disable-line react-hooks/exhaustive-deps
     if (demoVideoUrl && !isLive) {
       setIsLive(true);
       setStatus('connected');
@@ -680,12 +670,6 @@ const LiveSightApp: React.FC = () => {
     setToastMessage(null);
   }, []);
 
-  // Handle manual key submit
-  const handleManualKeySubmit = useCallback(() => {
-    if (manualKeyInput.length >= API_CONFIG.MIN_API_KEY_LENGTH) {
-      setApiKey(manualKeyInput);
-    }
-  }, [manualKeyInput]);
 
   // Background class based on contrast mode
   const bgClass = useMemo(() => {
@@ -700,91 +684,8 @@ const LiveSightApp: React.FC = () => {
   }, [isLive, status]);
 
   // --- API ENTRY UI (skip in demo mode) ---
-  if (!process.env.API_KEY && !apiKey && !demoVideoUrl) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#09090b] text-white p-6 relative overflow-hidden">
-        {/* Background gradients */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-sky-500/[0.07] blur-[100px]" />
-          <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-500/[0.05] blur-[100px]" />
-        </div>
-
-        <div className="w-full max-w-md z-10 space-y-10 animate-fade-in-up">
-          {/* Header */}
-          <div className="text-center">
-            <div className="inline-block px-3 py-1.5 bg-white/[0.06] backdrop-blur-sm rounded-full text-[10px] tracking-[0.3em] text-sky-300 mb-5 border border-white/[0.08]">
-              SEE BEYOND BARRIERS
-            </div>
-            <h1 className="text-5xl font-black tracking-tighter mb-3">
-              LIVE<span className="bg-gradient-to-r from-sky-400 to-cyan-300 bg-clip-text text-transparent">SIGHT</span>
-            </h1>
-            <p className="text-gray-400 text-sm tracking-wide mb-1">
-              Your Eyes to the World
-            </p>
-            <p className="text-gray-600 text-xs tracking-widest uppercase">
-              Powered by Gemini 3 Flash
-            </p>
-          </div>
-
-          {/* Auth Options */}
-          <div className="space-y-4">
-            <button
-              onClick={handleSelectKey}
-              className="w-full py-4 glass-card rounded-2xl flex items-center justify-center gap-3 text-sm font-semibold tracking-wider hover:bg-white/[0.08] transition-all duration-300 active:scale-[0.98]"
-              aria-label="Authenticate with Google"
-            >
-              <svg className="w-5 h-5 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              GOOGLE AUTH
-            </button>
-
-            <div className="flex items-center gap-4 opacity-30">
-              <div className="h-px bg-gradient-to-r from-transparent via-white to-transparent flex-1" />
-              <span className="text-[10px]">OR</span>
-              <div className="h-px bg-gradient-to-r from-transparent via-white to-transparent flex-1" />
-            </div>
-
-            <input
-              type="password"
-              placeholder="Enter Gemini API Key"
-              value={manualKeyInput}
-              onChange={(e) => setManualKeyInput(e.target.value)}
-              className="w-full bg-white/[0.04] border border-white/[0.08] p-4 rounded-2xl text-center text-sky-300 focus:border-sky-500/50 focus:bg-white/[0.06] outline-none transition-all duration-300 placeholder:text-gray-600"
-              aria-label="Enter API key manually"
-            />
-
-            <button
-              onClick={handleManualKeySubmit}
-              disabled={manualKeyInput.length < API_CONFIG.MIN_API_KEY_LENGTH}
-              className="w-full py-4 bg-gradient-to-r from-sky-500 to-cyan-500 disabled:opacity-40 hover:from-sky-400 hover:to-cyan-400 text-white font-bold tracking-widest rounded-2xl transition-all duration-300 shadow-[0_4px_20px_rgba(56,189,248,0.25)] disabled:cursor-not-allowed active:scale-[0.98]"
-              aria-label="Initialize with manual API key"
-            >
-              INITIALIZE
-            </button>
-          </div>
-
-          {/* Features Preview */}
-          <div className="grid grid-cols-3 gap-2 mt-8">
-            {[
-              { label: 'Navigate', color: 'text-sky-400' },
-              { label: 'Traffic', color: 'text-emerald-400' },
-              { label: 'Expiry', color: 'text-amber-400' },
-              { label: 'Colors', color: 'text-purple-400' },
-              { label: 'SOS', color: 'text-rose-400' },
-              { label: 'Explore', color: 'text-indigo-400' },
-            ].map((feature) => (
-              <div
-                key={feature.label}
-                className="text-center p-3 bg-white/[0.03] rounded-xl border border-white/[0.06] hover:bg-white/[0.06] transition-colors"
-              >
-                <span className={`text-sm font-semibold ${feature.color}`}>{feature.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+  if (!apiKey && !demoVideoUrl) {
+    return <Onboarding onApiKeySubmit={handleApiKeySubmit} />;
   }
 
   // --- MAIN HUD ---
@@ -794,9 +695,18 @@ const LiveSightApp: React.FC = () => {
       <SystemToast message={toastMessage} onClear={clearToast} type={toastType} />
 
       {/* Modals */}
-      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        apiKey={apiKey}
+        onApiKeyChange={(newKey) => {
+          setApiKey(newKey);
+          saveApiKey(newKey);
+        }}
+      />
       <CommandHelp isOpen={showHelp} onClose={() => setShowHelp(false)} />
       <EmergencyContactsModal isOpen={showEmergencyContacts} onClose={() => setShowEmergencyContacts(false)} />
+      <AdInterstitial show={showAd} onClose={() => setShowAd(false)} />
 
       {/* 1. TOP BAR (Status & Settings) */}
       <header className="px-4 py-3 flex justify-between items-center bg-gradient-to-b from-[#09090b]/90 via-[#09090b]/60 to-transparent backdrop-blur-sm z-40">

@@ -1,0 +1,14 @@
+What's New in LiveSight 2.1.0:
+
+- Completely redesigned user interface for a smoother, more accessible experience
+- Improved AI response speed with Google Gemini 2.0 Flash Live API integration
+- Enhanced navigation assistance with more detailed surroundings descriptions
+- Better traffic light detection accuracy in various lighting conditions
+- Improved color detection with more precise color naming
+- Optimized expiration date reading for a wider range of packaging formats
+- SOS emergency feature now shares live location more reliably
+- Explore mode provides richer environmental descriptions
+- Performance improvements and reduced battery consumption
+- Bug fixes and stability enhancements
+
+Thank you for using LiveSight. Your feedback helps us make the app better for everyone.

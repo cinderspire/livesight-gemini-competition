@@ -1,0 +1,41 @@
+LiveSight, gorme engelli kullanicilarin dunyayi guvenle ve bagimsiz bir sekilde kesfetmelerini saglayan, yapay zeka destekli ucretsiz bir navigasyon asistanidir.
+
+Google Gemini 2.0 Flash Live API ile calisan gelismis yapay zeka teknolojisi sayesinde LiveSight, gercek zamanli kamera ve ses analizi yaparak cevrenizdeki dunyayi anlamaniza ve etkilesiminize yardimci olur.
+
+TEMEL OZELLIKLER:
+
+- Navigasyon Yardimi: Hareket ederken engeller, yollar ve cevrenizdeki nesneler hakkinda gercek zamanli sesli rehberlik alin. LiveSight, akilli bir yol arkadasiniz olarak onunuzde ne oldugunu anlatir.
+
+- Trafik Isigi Algilama: Karsi tarafa gecmenin ne zaman guvenli oldugunu tam olarak bilin. LiveSight, trafik isigi renklerini tanir ve sizi aninda sesli geri bildirimle uyarir.
+
+- Renk Algilama: Kameranizi herhangi bir nesneye dogru tutun ve rengini sesli olarak ogrenim. Kiyafetlerden gunluk esyalara kadar her zaman baktaginiz rengi bilin.
+
+- Son Kullanma Tarihi Okuma: Suresi gecmis urunler konusunda bir daha endiselenmeyin. Kameranizi gida ambalajina dogru tutmaniz yeterli, LiveSight son kullanma tarihini sizin icin okuyacaktir.
+
+- SOS Acil Durum: Acil bir durumda, tek bir hareketle kayitli acil durum kisilerinize canli konumunuzu gonderin. Guvenliginiz her zaman onceliktir.
+
+- Kesif Modu: Cevrenizdeki ortami ayrintili olarak kesfedim. LiveSight, herhangi bir mekanin zihinsel haritasini olusturmaniza yardimci olan zengin, betimleyici sesli geri bildirim saglar.
+
+ONCELIK: ERISILEBILIRLIK:
+
+LiveSight, temelden erisilebilirlik odakli olarak tasarlanmistir. Tum arayuz, ekran okuyucular, sesli komutlar ve eller serbest kullanim icin optimize edilmistir. Her ozellik, ekrana bakmaniza gerek kalmadan calisacak sekilde tasarlanmistir.
+
+TAMAMEN UCRETSIZ:
+
+LiveSight bir sosyal sorumluluk projesidir. Erisilebilirlik teknolojisinin, mali durumdan bagimsiz olarak herkesin kullanimina acik olmasi gerektigine inaniyoruz. Abonelik, premium katman veya gizli maliyet yoktur. Tum ozellikler sonsuza kadar ucretsizdir.
+
+BIRDEN FAZLA DILDE KULLANILABILIR:
+
+LiveSight, Turkce ve Ingilizce olarak tam olarak kullanilabilir, yakin zamanda daha fazla dil destegi eklenecektir. Yapay zeka asistani her iki dilde de anlayabilir ve yanit verebilir.
+
+GIZLILIK VE GUVENLIK:
+
+Kamera goruntusu gercek zamanli olarak islenir ve asla saklanmaz veya paylasilmaz. LiveSight, sizi guvende tutarken gizliliginize saygi gosterir.
+
+GEREKSINIMLER:
+
+- Yapay zeka islemesi icin aktif bir internet baglantisi
+- Gercek zamanli yardim icin kamera ve mikrofon izinleri
+- Navigasyon ve acil durum ozellikleri icin konum izni
+
+LiveSight -- Engellerin Otesini Gorun.

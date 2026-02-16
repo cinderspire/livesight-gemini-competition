@@ -1,0 +1,42 @@
+# ──────────────────────────────────────────────
+#  LiveSight - App Store Deliver Configuration
+# ──────────────────────────────────────────────
+
+# App Information
+app_identifier "com.livesight.app"
+username "cinderspire@gmail.com"
+
+# Pricing
+price_tier 0  # Free app
+
+# App Rating (Age Rating)
+app_rating_config_path "./fastlane/rating_config.json"
+
+# Categories
+primary_category "NAVIGATION"
+secondary_category "HEALTH_AND_FITNESS"
+primary_first_sub_category "HEALTH_AND_FITNESS_ACCESSIBILITY"
+
+# Review Information
+app_review_information(
+  first_name: "LiveSight",
+  last_name: "Team",
+  phone_number: "+1 000 000 0000",
+  email_address: "cinderspire@gmail.com",
+  demo_user: "",
+  demo_password: "",
+  notes: "LiveSight requires a Google Gemini API key to function. " \
+         "You can get a free key at https://aistudio.google.com/apikey. " \
+         "The app will guide you through the setup process on first launch. " \
+         "Camera access is required for the core AI navigation functionality. " \
+         "Microphone access is needed for voice commands. " \
+         "No login or account is required."
+)
+
+# Copyright
+copyright "#{Time.now.year} cinderspire"
+
+# Privacy
+privacy_url "https://github.com/cinderspire/livesight-gemini-competition#privacy-and-safety"
+support_url "https://github.com/cinderspire/livesight-gemini-competition/issues"
+marketing_url "https://github.com/cinderspire/livesight-gemini-competition"

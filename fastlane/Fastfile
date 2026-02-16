@@ -1,0 +1,152 @@
+default_platform(:ios)
+
+# ──────────────────────────────────────────────
+#  LiveSight Fastlane Configuration
+#  Social Purpose Project - Free for All
+# ──────────────────────────────────────────────
+
+XCODEPROJ = "./ios/App/App.xcodeproj"
+XCWORKSPACE = "./ios/App/App.xcworkspace"
+SCHEME = "App"
+APP_IDENTIFIER = "com.livesight.app"
+APP_NAME = "LiveSight"
+
+platform :ios do
+
+  # ─── 1. CREATE APP ON APP STORE CONNECT ───
+  desc "Create the app on App Store Connect (run once)"
+  lane :create_app do
+    create_app_online(
+      app_identifier: APP_IDENTIFIER,
+      app_name: APP_NAME,
+      language: "English",
+      app_version: "2.1.0",
+      sku: "com.livesight.app.2024",
+      platforms: ["ios"],
+    )
+    UI.success("App created on App Store Connect!")
+  end
+
+  # ─── 2. CERTIFICATES & PROFILES ───
+  desc "Fetch or create signing certificates and provisioning profiles"
+  lane :certs do
+    get_certificates(
+      development: false,
+      force: false,
+    )
+    get_provisioning_profile(
+      app_identifier: APP_IDENTIFIER,
+      force: false,
+    )
+    UI.success("Certificates and profiles ready!")
+  end
+
+  # ─── 3. BUILD FOR APP STORE ───
+  desc "Build the app for App Store submission"
+  lane :build do
+    # Step 1: Build web assets
+    sh("cd .. && npm run build")
+
+    # Step 2: Sync Capacitor
+    sh("cd .. && npx cap sync ios")
+
+    # Step 3: Increment build number
+    increment_build_number(
+      xcodeproj: XCODEPROJ,
+    )
+
+    # Step 4: Build archive
+    build_app(
+      workspace: XCWORKSPACE,
+      scheme: SCHEME,
+      configuration: "Release",
+      export_method: "app-store",
+      export_options: {
+        provisioningProfiles: {
+          APP_IDENTIFIER => ENV["PROVISIONING_PROFILE_NAME"] || "LiveSight AppStore",
+        },
+      },
+      output_directory: "./build",
+      output_name: "LiveSight.ipa",
+      clean: true,
+      include_bitcode: false,
+    )
+    UI.success("IPA built successfully!")
+  end
+
+  # ─── 4. SCREENSHOTS ───
+  desc "Capture screenshots for App Store"
+  lane :screenshots do
+    # iPhone 16 Pro (6.9")
+    sh('xcrun simctl io booted screenshot ./fastlane/screenshots/en-US/iPhone_6.9_1.png 2>/dev/null || true')
+
+    # iPad Pro 13" (2064x2752)
+    sh('xcrun simctl list devices booted | head -5')
+
+    UI.important("Screenshots should be captured manually from simulators:")
+    UI.message("  iPhone 16 Pro Max: 1320x2868 (6.9\")")
+    UI.message("  iPhone 16 Pro: 1206x2622 (6.3\")")
+    UI.message("  iPad Pro 13\": 2064x2752")
+    UI.message("")
+    UI.message("  Run simulators and use: xcrun simctl io <UDID> screenshot <path>")
+  end
+
+  # ─── 5. UPLOAD METADATA ONLY ───
+  desc "Upload metadata, screenshots, and description to App Store Connect"
+  lane :metadata do
+    deliver(
+      app_identifier: APP_IDENTIFIER,
+      skip_binary_upload: true,
+      skip_screenshots: false,
+      force: true,
+      automatic_release: false,
+      phased_release: true,
+      submission_information: {
+        add_id_info_uses_idfa: false,
+      },
+      precheck_include_in_app_purchases: false,
+      metadata_path: "./fastlane/metadata",
+      screenshots_path: "./fastlane/screenshots",
+    )
+    UI.success("Metadata uploaded to App Store Connect!")
+  end
+
+  # ─── 6. FULL SUBMISSION ───
+  desc "Build and submit to App Store for review"
+  lane :release do
+    certs
+    build
+    deliver(
+      app_identifier: APP_IDENTIFIER,
+      ipa: "./build/LiveSight.ipa",
+      force: true,
+      automatic_release: false,
+      phased_release: true,
+      submission_information: {
+        add_id_info_uses_idfa: false,
+        content_rights_has_rights: true,
+        content_rights_contains_third_party_content: true,
+        export_compliance_uses_encryption: false,
+        export_compliance_is_exempt: true,
+      },
+      precheck_include_in_app_purchases: false,
+      metadata_path: "./fastlane/metadata",
+      screenshots_path: "./fastlane/screenshots",
+    )
+    UI.success("LiveSight submitted to App Store for review!")
+  end
+
+  # ─── 7. TESTFLIGHT ───
+  desc "Upload to TestFlight for beta testing"
+  lane :beta do
+    certs
+    build
+    upload_to_testflight(
+      ipa: "./build/LiveSight.ipa",
+      skip_waiting_for_build_processing: true,
+      changelog: "LiveSight v2.1.0 - Complete renovation with new onboarding, custom FPS, and improved AI.",
+    )
+    UI.success("Build uploaded to TestFlight!")
+  end
+
+end

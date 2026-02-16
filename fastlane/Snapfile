@@ -1,0 +1,23 @@
+# LiveSight Screenshot Configuration
+
+# Devices to capture screenshots on
+devices([
+  "iPhone 16 Pro Max",   # 6.9" - 1320x2868 (required)
+  "iPhone 16 Pro",       # 6.3" - 1206x2622 (required)
+  "iPad Pro 13-inch (M4)", # 2064x2752 (required)
+])
+
+# Languages
+languages([
+  "en-US",
+  "tr",
+])
+
+# Output directory
+output_directory("./fastlane/screenshots")
+
+# Clear previous screenshots
+clear_previous_screenshots(true)
+
+# Scheme
+scheme("App")

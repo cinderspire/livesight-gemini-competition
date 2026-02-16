@@ -57,6 +57,8 @@ coverage/
 livesight_logs.txt
 *.txt
 !README.txt
+!fastlane/metadata/**/*.txt
+!fastlane/screenshots/**/*.strings
 
 # Junk files
 nul
@@ -86,3 +88,14 @@ releases/
 
 dist/
 *.mp4
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output/
+fastlane/.env
+*.p8
+*.cer
+*.mobileprovision
+*.ipa

@@ -1,0 +1,41 @@
+LiveSight is a free, AI-powered navigation assistant designed to empower visually impaired users to explore the world with confidence and independence.
+
+Using advanced artificial intelligence through the Google Gemini 2.0 Flash Live API, LiveSight provides real-time camera and voice analysis to help you understand and interact with your surroundings.
+
+KEY FEATURES:
+
+- Navigation Assistance: Get real-time spoken guidance about obstacles, pathways, and surroundings as you move through the world. LiveSight acts as your intelligent companion, describing what lies ahead.
+
+- Traffic Light Detection: Know exactly when it is safe to cross the street. LiveSight identifies traffic light colors and alerts you instantly with voice feedback.
+
+- Color Detection: Point your camera at any object and hear its color described aloud. From clothing to everyday items, always know what color you are looking at.
+
+- Expiration Date Reading: Never worry about expired products again. Simply point your camera at food packaging and LiveSight will read the expiration date for you.
+
+- SOS Emergency: In case of an emergency, quickly send your live location to your saved emergency contacts with a single action. Your safety is always a priority.
+
+- Explore Mode: Discover your environment in detail. LiveSight provides rich, descriptive audio feedback about your surroundings, helping you build a mental map of any space.
+
+ACCESSIBILITY FIRST:
+
+LiveSight is built from the ground up with accessibility at its core. The entire interface is optimized for screen readers, voice commands, and hands-free operation. Every feature is designed so that you never need to look at the screen.
+
+COMPLETELY FREE:
+
+LiveSight is a social purpose project. We believe that accessibility technology should be available to everyone, regardless of their financial situation. There are no subscriptions, no premium tiers, and no hidden costs. Every feature is free, forever.
+
+AVAILABLE IN MULTIPLE LANGUAGES:
+
+LiveSight is fully available in English and Turkish, with more languages coming soon. The AI assistant can understand and respond in both languages.
+
+PRIVACY AND SAFETY:
+
+Your camera feed is processed in real-time and is never stored or shared. LiveSight respects your privacy while keeping you safe.
+
+REQUIREMENTS:
+
+- An active internet connection for AI processing
+- Camera and microphone permissions for real-time assistance
+- Location permission for navigation and emergency features
+
+LiveSight -- See Beyond Barriers.

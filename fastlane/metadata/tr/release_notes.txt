@@ -1,0 +1,14 @@
+LiveSight 2.1.0 Surumundeki Yenilikler:
+
+- Daha akici ve erisilebilir bir deneyim icin tamamen yeniden tasarlanan kullanici arayuzu
+- Google Gemini 2.0 Flash Live API entegrasyonu ile iyilestirilmis yapay zeka yanit hizi
+- Daha ayrintili cevre betimlemeleriyle gelistirilmis navigasyon yardimi
+- Cesitli aydinlatma kosullarinda daha iyi trafik isigi algilama dogrulugu
+- Daha hassas renk adlandirma ile iyilestirilmis renk algilama
+- Daha genis ambalaj formatlari icin optimize edilmis son kullanma tarihi okuma
+- SOS acil durum ozelligi artik canli konumu daha guvenilir sekilde paylasiyor
+- Kesif modu daha zengin cevresel betimlemeler sunuyor
+- Performans iyilestirmeleri ve azaltilmis pil tuketimi
+- Hata duzeltmeleri ve kararlilik iyilestirmeleri
+
+LiveSight'i kullandiginiz icin tesekkur ederiz. Geri bildirimleriniz uygulamayi herkes icin daha iyi hale getirmemize yardimci oluyor.
